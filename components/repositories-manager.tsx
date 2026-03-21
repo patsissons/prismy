@@ -16,6 +16,9 @@ const rangeOptions: { label: string; value: RangePreset }[] = [
   { label: "180 Days", value: "180d" }
 ];
 
+const githubPatUrl =
+  "https://github.com/settings/personal-access-tokens/new?name=PR-ism&description=Read+pull+request+data+for+PR-ism&expires_in=30&pull_requests=read";
+
 export function RepositoriesManager({
   repositories,
   authToken,
@@ -132,7 +135,17 @@ export function RepositoriesManager({
                 {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </label>
-            <p className="mt-4 text-sm text-muted-foreground">Stored locally only. Use repo read access for private repositories.</p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Stored locally only. Use repo read access for private repositories.{" "}
+              <a
+                href={githubPatUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline decoration-primary/50 underline-offset-4 transition hover:decoration-primary"
+              >
+                Generate a GitHub token with the recommended settings.
+              </a>
+            </p>
           </Card>
 
           <Card className="p-6">
