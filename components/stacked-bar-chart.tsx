@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import type { BucketSeriesDatum, MetricKey } from "@/lib/types";
 import { formatDurationDays } from "@/lib/utils";
@@ -16,6 +18,23 @@ export function StackedBarChart({
   metric: MetricKey;
 }) {
   const maxValue = Math.max(...data.map((item) => item.totalValue), 1);
+  const [hoveredSegment, setHoveredSegment] = useState<{
+    x: number;
+    y: number;
+    bucketLabel: string;
+    bucketDateLabel: string;
+    bucketTotal: number;
+    userName: string;
+    userColor: string;
+    metricValue: number;
+    totalForRange: number;
+  } | null>(null);
+  const totalsByUser = Object.fromEntries(
+    users.map((user) => [
+      user.login,
+      data.reduce((sum, bucket) => sum + (bucket.totals[user.login] ?? 0), 0)
+    ])
+  );
 
   return (
     <Card className="overflow-hidden p-5 md:p-7">
@@ -26,25 +45,76 @@ export function StackedBarChart({
         </div>
       </div>
 
-      <div className="mt-6 rounded bg-surface/80 p-4 md:p-6">
-        <div className="grid min-h-[360px] grid-cols-[repeat(auto-fit,minmax(56px,1fr))] items-end gap-4 bg-editorial-grid bg-[size:32px_32px] px-1 py-5">
+      <div className="relative mt-6 min-w-0 rounded bg-surface/80 p-4 md:p-6">
+        <div
+          className="grid min-h-[360px] min-w-0 items-end gap-3 bg-editorial-grid bg-[size:32px_32px] px-1 py-5"
+          style={{ gridTemplateColumns: `repeat(${Math.max(data.length, 1)}, minmax(0, 1fr))` }}
+        >
           {data.map((bucket) => (
-            <div key={bucket.bucketKey} className="flex flex-col items-center gap-4">
+            <div key={bucket.bucketKey} className="flex min-w-0 flex-col items-center gap-4">
               <div className="flex h-[280px] w-full items-end justify-center">
                 <div
-                  className="flex w-full max-w-[90px] flex-col overflow-hidden rounded-sm bg-surface-high/60"
+                  className="flex w-full max-w-[76px] min-w-0 flex-col overflow-hidden rounded-sm bg-surface-high/60"
                   style={{ height: `${Math.max(10, (bucket.totalValue / maxValue) * 100)}%` }}
-                  title={describeBucket(bucket, users, metric)}
                 >
                   {users.map((user) => {
                     const value = bucket.totals[user.login] ?? 0;
                     const height = bucket.totalValue ? (value / bucket.totalValue) * 100 : 0;
+                    const bucketDateLabel = formatBucketDateLabel(bucket.bucketKey);
 
                     if (height <= 0) {
                       return null;
                     }
 
-                    return <div key={user.login} style={{ height: `${height}%`, backgroundColor: user.color }} />;
+                    return (
+                      <button
+                        key={user.login}
+                        type="button"
+                        className="w-full transition hover:brightness-110 focus:brightness-110"
+                        style={{ height: `${height}%`, backgroundColor: user.color }}
+                        aria-label={describeSegment(bucket.bucketLabel, user.name, value, bucket.totalValue, totalsByUser[user.login] ?? 0, metric)}
+                        onMouseEnter={(event) =>
+                          setHoveredSegment({
+                            x: event.clientX,
+                            y: event.clientY,
+                            bucketLabel: bucket.bucketLabel,
+                            bucketDateLabel,
+                            bucketTotal: bucket.totalValue,
+                            userName: user.name,
+                            userColor: user.color,
+                            metricValue: value,
+                            totalForRange: totalsByUser[user.login] ?? 0
+                          })
+                        }
+                        onMouseMove={(event) =>
+                          setHoveredSegment((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  x: event.clientX,
+                                  y: event.clientY
+                                }
+                              : current
+                          )
+                        }
+                        onMouseLeave={() => setHoveredSegment(null)}
+                        onFocus={(event) => {
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          setHoveredSegment({
+                            x: rect.left + rect.width / 2,
+                            y: rect.top,
+                            bucketLabel: bucket.bucketLabel,
+                            bucketDateLabel,
+                            bucketTotal: bucket.totalValue,
+                            userName: user.name,
+                            userColor: user.color,
+                            metricValue: value,
+                            totalForRange: totalsByUser[user.login] ?? 0
+                          });
+                        }}
+                        onBlur={() => setHoveredSegment(null)}
+                      />
+                    );
                   })}
                 </div>
               </div>
@@ -53,34 +123,83 @@ export function StackedBarChart({
           ))}
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-4 border-t border-border/10 pt-6">
-          {users.map((user) => (
-            <div key={user.login} className="flex items-center gap-3 text-sm uppercase tracking-[0.18em] text-foreground/86">
-              <span className="inline-block h-3.5 w-3.5 rounded-[2px]" style={{ backgroundColor: user.color }} />
-              {user.name}
+        {hoveredSegment ? (
+          <div
+            className="pointer-events-none fixed z-50 w-[220px] rounded-sm border border-border/40 bg-surface-low/95 p-3 shadow-2xl backdrop-blur"
+            style={{
+              left: Math.min(hoveredSegment.x + 14, typeof window !== "undefined" ? window.innerWidth - 236 : hoveredSegment.x + 14),
+              top: Math.max(16, hoveredSegment.y - 18)
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="h-3 w-3 rounded-[2px]" style={{ backgroundColor: hoveredSegment.userColor }} />
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-foreground">{hoveredSegment.userName}</div>
+                {hoveredSegment.bucketLabel.length > 1 ? (
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{hoveredSegment.bucketLabel}</div>
+                ) : null}
+                <div className="mt-1 text-xs text-muted-foreground">{hoveredSegment.bucketDateLabel}</div>
+              </div>
             </div>
-          ))}
-        </div>
+
+            <div className="mt-3 space-y-1.5 text-sm text-foreground/88">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">{metricLabel(metric)}</span>
+                <span>{formatMetricValue(hoveredSegment.metricValue, metric)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Bucket share</span>
+                <span>{formatPercentage(hoveredSegment.metricValue, hoveredSegment.bucketTotal)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Visible range total</span>
+                <span>{formatMetricValue(hoveredSegment.totalForRange, metric)}</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
       </div>
     </Card>
   );
 }
 
-function describeBucket(
-  bucket: BucketSeriesDatum,
-  users: { login: string; name: string }[],
+function describeSegment(
+  bucketLabel: string,
+  userName: string,
+  metricValue: number,
+  bucketTotal: number,
+  totalForRange: number,
   metric: MetricKey
 ) {
-  const parts = users
-    .map((user) => {
-      const value = bucket.totals[user.login] ?? 0;
-      if (!value) {
-        return null;
-      }
+  return `${userName} in ${bucketLabel}: ${formatMetricValue(metricValue, metric)}. ${formatPercentage(metricValue, bucketTotal)} of bucket. ${formatMetricValue(totalForRange, metric)} in visible range.`;
+}
 
-      return `${user.name}: ${metric === "duration" ? formatDurationDays(value) : Math.round(value)}`;
-    })
-    .filter(Boolean);
+function metricLabel(metric: MetricKey) {
+  return metric === "duration" ? "Duration" : metric === "merged" ? "Merged PRs" : "Created PRs";
+}
 
-  return `${bucket.bucketLabel} • ${parts.join(" • ")}`;
+function formatMetricValue(value: number, metric: MetricKey) {
+  if (metric === "duration") {
+    return formatDurationDays(value);
+  }
+
+  return `${Math.round(value)}`;
+}
+
+function formatPercentage(value: number, total: number) {
+  if (!total) {
+    return "0%";
+  }
+
+  return `${Math.round((value / total) * 100)}%`;
+}
+
+function formatBucketDateLabel(bucketKey: string) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(bucketKey)) {
+    const date = new Date(`${bucketKey}T00:00:00`);
+    return `${new Intl.DateTimeFormat("en", { weekday: "long" }).format(date)}, ${bucketKey}`;
+  }
+
+  return bucketKey;
 }

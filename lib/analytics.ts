@@ -213,7 +213,7 @@ function getBucketKey(date: Date, bucketSize: BucketSize) {
 
 function formatBucketLabel(date: Date, bucketSize: BucketSize) {
   if (bucketSize === "day") {
-    return new Intl.DateTimeFormat("en", { weekday: "short" }).format(date).toUpperCase();
+    return ["U", "M", "T", "W", "R", "F", "S"][date.getDay()];
   }
 
   if (bucketSize === "week") {

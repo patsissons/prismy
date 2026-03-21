@@ -74,9 +74,9 @@ export function OverviewPageClient() {
         metric={filters.metric}
       />
 
-      <div className="grid gap-8 xl:grid-cols-[1.2fr_0.9fr]">
-        <PriorityReviews items={priorityReviews} />
+      <div className="space-y-8">
         <StatusComposition {...status} />
+        <PriorityReviews items={priorityReviews} />
       </div>
     </div>
   );

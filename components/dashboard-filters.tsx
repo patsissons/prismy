@@ -39,8 +39,8 @@ export function DashboardFilters({
 }) {
   return (
     <Card className="overflow-hidden bg-surface-low">
-      <div className="grid gap-px bg-background/50 lg:grid-cols-[1.1fr_1.2fr_0.85fr]">
-        <div className="space-y-4 bg-surface-low p-5">
+      <div className="grid gap-px bg-background/50 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1.15fr)_minmax(280px,0.95fr)]">
+        <div className="min-w-0 space-y-4 bg-surface-low p-5">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Filter className="h-4 w-4" />
             <span className="font-body text-xs uppercase tracking-[0.24em]">Repository Context</span>
@@ -64,7 +64,7 @@ export function DashboardFilters({
           </label>
         </div>
 
-        <div className="space-y-4 bg-surface-low p-5">
+        <div className="min-w-0 space-y-4 bg-surface-low p-5">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Layers3 className="h-4 w-4" />
             <span className="font-body text-xs uppercase tracking-[0.24em]">Metrics & Window</span>
@@ -112,13 +112,13 @@ export function DashboardFilters({
           </div>
         </div>
 
-        <div className="space-y-4 bg-surface-low p-5">
+        <div className="min-w-0 space-y-4 bg-surface-low p-5">
           <div className="font-body text-xs uppercase tracking-[0.24em] text-muted-foreground">People Filter</div>
-          <div className="flex flex-wrap gap-2">
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-2">
             <button
               onClick={() => onChange({ users: [] })}
               className={cn(
-                "rounded-sm border border-border/20 px-3 py-2 text-xs uppercase tracking-[0.2em] text-muted-foreground transition",
+                "flex w-full items-center rounded-sm border border-border/20 px-3 py-2 text-left text-xs uppercase tracking-[0.2em] text-muted-foreground transition",
                 filters.users.length === 0 && "bg-primary/12 text-primary"
               )}
             >
@@ -138,12 +138,12 @@ export function DashboardFilters({
                     })
                   }
                   className={cn(
-                    "rounded-sm border border-border/20 px-3 py-2 text-xs uppercase tracking-[0.2em] text-muted-foreground transition",
+                    "flex w-full items-center rounded-sm border border-border/20 px-3 py-2 text-left text-xs uppercase tracking-[0.2em] text-muted-foreground transition",
                     selected && "bg-surface-high text-foreground"
                   )}
                 >
-                  <span className="mr-2 inline-block h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: user.color }} />
-                  {user.name}
+                  <span className="mr-3 inline-block h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ backgroundColor: user.color }} />
+                  <span className="truncate">{user.name}</span>
                 </button>
               );
             })}

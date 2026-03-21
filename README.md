@@ -5,7 +5,7 @@ PR-ism is a local-first pull request analytics dashboard for GitHub repositories
 ## What It Does
 
 - Connect one or more GitHub repositories from the UI
-- Sync up to the latest 100 pull requests per repository from the GitHub REST API
+- Sync enough pull requests per repository to cover the 180-day dashboard window
 - Explore PR activity through overview, team, and history dashboards
 - Filter by repository, date range, metric, bucket size, and author
 - Persist repository connections and settings in browser `localStorage`
@@ -73,7 +73,7 @@ pnpm typecheck
 - Public repositories can be queried without a token until rate limits apply
 - Private repositories require a classic PAT with the `repo` scope
 - If your organization uses SSO, authorize the token for that organization after creating it
-- The current sync fetches up to 100 pull requests per repository request
+- Sync paginates GitHub pull requests until it covers the last 180 days of PR activity
 - Some fields such as additions/deletions may be approximated when the list API does not provide them
 
 ## Current Scope

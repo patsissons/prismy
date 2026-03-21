@@ -10,6 +10,7 @@ interface GitHubPullRequest {
   draft: boolean;
   html_url: string;
   created_at: string;
+  updated_at: string;
   merged_at: string | null;
   closed_at: string | null;
   user: {
@@ -18,6 +19,9 @@ interface GitHubPullRequest {
   additions?: number;
   deletions?: number;
 }
+
+const SYNC_LOOKBACK_DAYS = 180;
+const GITHUB_PAGE_SIZE = 100;
 
 export async function syncRepository(connection: RepositoryConnection, authToken: string) {
   const parsed = parseGitHubUrl(connection.url);
@@ -33,25 +37,47 @@ export async function syncRepository(connection: RepositoryConnection, authToken
     headers.Authorization = `Bearer ${authToken}`;
   }
 
-  const response = await fetch(
-    `https://api.github.com/repos/${parsed.owner}/${parsed.name}/pulls?state=all&sort=updated&direction=desc&per_page=100`,
-    { headers }
-  );
+  const syncedPrs: GitHubPullRequest[] = [];
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - SYNC_LOOKBACK_DAYS);
+  cutoff.setHours(0, 0, 0, 0);
 
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new Error("GitHub rejected the token. Verify scopes for repository access.");
+  let page = 1;
+
+  while (true) {
+    const response = await fetch(
+      `https://api.github.com/repos/${parsed.owner}/${parsed.name}/pulls?state=all&sort=updated&direction=desc&per_page=${GITHUB_PAGE_SIZE}&page=${page}`,
+      { headers }
+    );
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("GitHub rejected the token. Verify scopes for repository access.");
+      }
+
+      if (response.status === 404) {
+        throw new Error("Repository not found or not visible to the provided token.");
+      }
+
+      throw new Error(`GitHub sync failed with status ${response.status}.`);
     }
 
-    if (response.status === 404) {
-      throw new Error("Repository not found or not visible to the provided token.");
+    const pagePrs = (await response.json()) as GitHubPullRequest[];
+    syncedPrs.push(...pagePrs);
+
+    if (pagePrs.length < GITHUB_PAGE_SIZE) {
+      break;
     }
 
-    throw new Error(`GitHub sync failed with status ${response.status}.`);
+    const oldestUpdatedAt = pagePrs[pagePrs.length - 1]?.updated_at;
+    if (!oldestUpdatedAt || new Date(oldestUpdatedAt) < cutoff) {
+      break;
+    }
+
+    page += 1;
   }
 
-  const prs = (await response.json()) as GitHubPullRequest[];
-  return prs.map(toRecord);
+  return syncedPrs.map(toRecord);
 }
 
 function toRecord(pr: GitHubPullRequest): PullRequestRecord {
