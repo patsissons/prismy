@@ -1,0 +1,70 @@
+"use client";
+
+import { useEffect } from "react";
+
+import { DashboardFilters } from "@/components/dashboard-filters";
+import { EmptyDashboard } from "@/components/empty-dashboard";
+import { HistoryFeed } from "@/components/history-feed";
+import { StackedBarChart } from "@/components/stacked-bar-chart";
+import { usePrIsmQueryState } from "@/hooks/use-pr-ism-query-state";
+import { usePrIsmWorkspace } from "@/hooks/use-pr-ism-workspace";
+import { buildActivityFeed, buildStackedSeries, filterRecords, getAvailableUsers, getRepositoryRecords } from "@/lib/analytics";
+
+export function HistoryPageClient() {
+  const { repositories, settings, ready } = usePrIsmWorkspace();
+  const { filters, setFilters } = usePrIsmQueryState(settings.defaultRange);
+
+  useEffect(() => {
+    if (!ready || !repositories.length || filters.repoId) {
+      return;
+    }
+
+    setFilters({ repoId: repositories[0].id, metric: "created" });
+  }, [filters.repoId, ready, repositories, setFilters]);
+
+  if (!ready) {
+    return null;
+  }
+
+  if (!repositories.length) {
+    return <EmptyDashboard />;
+  }
+
+  const repository = repositories.find((item) => item.id === filters.repoId) ?? repositories[0];
+  const allRecords = getRepositoryRecords(repository);
+  const availableUsers = getAvailableUsers(allRecords);
+  const visibleUsers = filters.users.length
+    ? availableUsers.filter((user) => filters.users.includes(user.login))
+    : availableUsers;
+  const filteredRecords = filterRecords(allRecords, filters.range, filters.users);
+  const activity = buildActivityFeed(filteredRecords);
+  const stackedSeries = buildStackedSeries(filteredRecords, filters.metric, filters.bucket, visibleUsers, filters.range);
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="font-display text-5xl font-extrabold tracking-[-0.06em]">History</h1>
+        <p className="mt-3 max-w-3xl text-xl leading-8 text-muted-foreground">
+          Review recent pull requests alongside the aggregated trend for the same filter window.
+        </p>
+      </div>
+
+      <DashboardFilters
+        repositories={repositories}
+        filters={{ ...filters, repoId: repository.id }}
+        availableUsers={availableUsers}
+        onChange={setFilters}
+      />
+
+      <StackedBarChart
+        title="Throughput Trend"
+        subtitle="Use the same filters as the overview to inspect how activity shifted across the selected time buckets."
+        data={stackedSeries}
+        users={visibleUsers}
+        metric={filters.metric}
+      />
+
+      <HistoryFeed records={activity} />
+    </div>
+  );
+}
