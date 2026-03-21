@@ -17,7 +17,7 @@ const rangeOptions: { label: string; value: RangePreset }[] = [
 ];
 
 const githubPatUrl =
-  "https://github.com/settings/personal-access-tokens/new?name=PR-ism&description=Read+pull+request+data+for+PR-ism&expires_in=30&pull_requests=read";
+  "https://github.com/settings/tokens/new?description=PR-ism&scopes=repo";
 
 export function RepositoriesManager({
   repositories,
@@ -84,7 +84,7 @@ export function RepositoriesManager({
               <Button type="submit">Connect</Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              Public repos can sync without a token until GitHub rate limits apply. Private repos require a PAT stored below.
+              Public repos can sync without a token until GitHub rate limits apply. Private repos require a classic PAT stored below.
             </p>
             {error ? <p className="text-sm text-[#ff716c]">{error}</p> : null}
           </form>
@@ -136,14 +136,15 @@ export function RepositoriesManager({
               </button>
             </label>
             <p className="mt-4 text-sm text-muted-foreground">
-              Stored locally only. Use repo read access for private repositories.{" "}
+              Stored locally only. Use a classic GitHub PAT with the `repo` scope for private repositories. If Boulevard uses
+              SSO, authorize the token for the org after creating it.{" "}
               <a
                 href={githubPatUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="text-primary underline decoration-primary/50 underline-offset-4 transition hover:decoration-primary"
               >
-                Generate a GitHub token with the recommended settings.
+                Generate a classic GitHub token with the recommended settings.
               </a>
             </p>
           </Card>

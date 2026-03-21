@@ -53,7 +53,7 @@ pnpm typecheck
 
 1. Open the **Repositories** page.
 2. Add a repository URL like `https://github.com/org/repo`.
-3. Optionally add a GitHub personal access token if you need private repo access or higher rate limits.
+3. Optionally add a classic GitHub personal access token if you need private repo access or higher rate limits.
 4. Sync the repository.
 5. Review analytics in:
    - **Overview** for KPIs, priority reviews, and status composition
@@ -71,7 +71,8 @@ pnpm typecheck
 
 - Sync uses the GitHub REST API from the client
 - Public repositories can be queried without a token until rate limits apply
-- Private repositories require a token with repository read access
+- Private repositories require a classic PAT with the `repo` scope
+- If your organization uses SSO, authorize the token for that organization after creating it
 - The current sync fetches up to 100 pull requests per repository request
 - Some fields such as additions/deletions may be approximated when the list API does not provide them
 
