@@ -65,4 +65,5 @@ export interface DashboardFilters {
   metric: MetricKey;
   bucket: BucketSize;
   users: string[];
+  offset: number;
 }

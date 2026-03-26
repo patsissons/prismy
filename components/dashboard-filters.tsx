@@ -1,6 +1,8 @@
 "use client";
 
-import { ChevronDown, Filter, Layers3 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Filter, Layers3 } from "lucide-react";
+
+import { getVisibleWindow } from "@/lib/analytics";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -96,6 +98,42 @@ export function DashboardFilters({
             ))}
           </div>
 
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8"
+              onClick={() => onChange({ offset: filters.offset - 1 })}
+              aria-label="Previous period"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <button
+              onClick={() => onChange({ offset: 0 })}
+              disabled={filters.offset === 0}
+              className={cn(
+                "min-w-[7rem] rounded-sm px-3 py-1.5 text-center font-body text-xs tracking-wide transition",
+                filters.offset === 0
+                  ? "text-muted-foreground"
+                  : "text-foreground hover:bg-surface-high cursor-pointer"
+              )}
+            >
+              {formatWindowLabel(filters.range, filters.offset)}
+            </button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8"
+              disabled={filters.offset >= 0}
+              onClick={() => onChange({ offset: filters.offset + 1 })}
+              aria-label="Next period"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
           <div className="flex flex-wrap gap-2">
             {buckets.map((bucket) => (
               <button
@@ -152,4 +190,15 @@ export function DashboardFilters({
       </div>
     </Card>
   );
+}
+
+const dateFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
+
+function formatWindowLabel(range: RangePreset, offset: number): string {
+  if (offset === 0) {
+    return "Current";
+  }
+
+  const { start, end } = getVisibleWindow(range, offset);
+  return `${dateFormat.format(start)} – ${dateFormat.format(end)}`;
 }

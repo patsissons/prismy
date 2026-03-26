@@ -10,7 +10,7 @@ import type {
 
 const USER_COLORS = ["rgb(116 177 255)", "rgb(211 132 242)", "rgb(255 177 75)", "rgb(123 214 162)", "rgb(255 120 108)"];
 
-export function getVisibleWindow(range: RangePreset) {
+export function getVisibleWindow(range: RangePreset, offset: number = 0) {
   const days = {
     "7d": 7,
     "30d": 30,
@@ -22,6 +22,13 @@ export function getVisibleWindow(range: RangePreset) {
   const start = new Date();
   start.setDate(end.getDate() - (days - 1));
   start.setHours(0, 0, 0, 0);
+
+  if (offset !== 0) {
+    const shift = offset * days;
+    start.setDate(start.getDate() + shift);
+    end.setDate(end.getDate() + shift);
+    end.setHours(23, 59, 59, 999);
+  }
 
   return { start, end };
 }
@@ -39,8 +46,8 @@ export function getAvailableUsers(records: PullRequestRecord[]) {
   }));
 }
 
-export function filterRecords(records: PullRequestRecord[], range: RangePreset, selectedUsers: string[]) {
-  const { start, end } = getVisibleWindow(range);
+export function filterRecords(records: PullRequestRecord[], range: RangePreset, selectedUsers: string[], offset: number = 0) {
+  const { start, end } = getVisibleWindow(range, offset);
 
   return records.filter((record) => {
     const createdAt = new Date(record.createdAt);
@@ -59,9 +66,10 @@ export function buildStackedSeries(
   metric: MetricKey,
   bucketSize: BucketSize,
   users: { login: string; name: string; color: string }[],
-  range: RangePreset
+  range: RangePreset,
+  offset: number = 0
 ) {
-  const { start, end } = getVisibleWindow(range);
+  const { start, end } = getVisibleWindow(range, offset);
   const buckets = buildBuckets(start, end, bucketSize);
   const bucketMap = new Map(
     buckets.map((bucket) => [

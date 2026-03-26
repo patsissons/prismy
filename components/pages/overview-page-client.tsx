@@ -49,11 +49,11 @@ export function OverviewPageClient() {
   const visibleUsers = filters.users.length
     ? availableUsers.filter((user) => filters.users.includes(user.login))
     : availableUsers;
-  const filteredRecords = filterRecords(allRecords, filters.range, filters.users);
+  const filteredRecords = filterRecords(allRecords, filters.range, filters.users, filters.offset);
   const kpis = summarizeKpis(filteredRecords);
   const priorityReviews = getPriorityReviews(filteredRecords);
   const status = getStatusComposition(filteredRecords);
-  const stackedSeries = buildStackedSeries(filteredRecords, filters.metric, filters.bucket, visibleUsers, filters.range);
+  const stackedSeries = buildStackedSeries(filteredRecords, filters.metric, filters.bucket, visibleUsers, filters.range, filters.offset);
 
   return (
     <div className="space-y-8">

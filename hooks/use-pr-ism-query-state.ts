@@ -20,13 +20,16 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
     const metric = searchParams.get("metric");
     const bucket = searchParams.get("bucket");
     const users = searchParams.get("users");
+    const offset = searchParams.get("offset");
+    const parsedOffset = offset !== null ? parseInt(offset, 10) : 0;
 
     return {
       repoId: searchParams.get("repo"),
       range: RANGE_PRESETS.includes(range as RangePreset) ? (range as RangePreset) : defaultRange,
       metric: METRICS.includes(metric as MetricKey) ? (metric as MetricKey) : "created",
       bucket: BUCKETS.includes(bucket as BucketSize) ? (bucket as BucketSize) : inferBucket(range as RangePreset | null, defaultRange),
-      users: users ? users.split(",").filter(Boolean) : []
+      users: users ? users.split(",").filter(Boolean) : [],
+      offset: Number.isFinite(parsedOffset) ? parsedOffset : 0
     };
   }, [defaultRange, searchParams]);
 
@@ -40,6 +43,7 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
 
       if (updates.range) {
         next.set("range", updates.range);
+        next.delete("offset");
         if (!searchParams.get("bucket")) {
           next.set("bucket", inferBucket(updates.range, defaultRange));
         }
@@ -55,6 +59,10 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
 
       if (updates.users !== undefined) {
         updates.users.length ? next.set("users", updates.users.join(",")) : next.delete("users");
+      }
+
+      if (updates.offset !== undefined) {
+        updates.offset !== 0 ? next.set("offset", String(updates.offset)) : next.delete("offset");
       }
 
       startTransition(() => {
