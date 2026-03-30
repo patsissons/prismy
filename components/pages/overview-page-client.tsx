@@ -17,6 +17,7 @@ import {
   getPriorityReviews,
   getRepositoryRecords,
   getStatusComposition,
+  getVisibleWindow,
   summarizeUsers,
   summarizeKpis
 } from "@/lib/analytics";
@@ -45,6 +46,7 @@ export function OverviewPageClient() {
   }
 
   const repository = repositories.find((item) => item.id === filters.repoId) ?? repositories[0];
+  const visibleWindow = getVisibleWindow(filters.range, filters.offset);
   const allRecords = getRepositoryRecords(repository);
   const availableUsers = getAvailableUsers(allRecords);
   const peopleFilterRecords = filterRecords(allRecords, filters.range, [], filters.offset);
@@ -63,7 +65,7 @@ export function OverviewPageClient() {
 
   return (
     <div className="space-y-8">
-      <MetricCards current={kpis} previous={previousKpis} />
+      <MetricCards current={kpis} previous={previousKpis} repository={repository} timeWindow={visibleWindow} />
 
       <DashboardFilters
         repositories={repositories}
@@ -78,11 +80,13 @@ export function OverviewPageClient() {
         data={stackedSeries}
         users={visibleUsers}
         metric={filters.metric}
+        repository={repository}
+        timeWindow={visibleWindow}
       />
 
       <div className="space-y-8">
-        <StatusComposition current={status} previous={previousStatus} />
-        <PriorityReviews items={priorityReviews} />
+        <StatusComposition current={status} previous={previousStatus} repository={repository} timeWindow={visibleWindow} />
+        <PriorityReviews items={priorityReviews} repository={repository} timeWindow={visibleWindow} />
       </div>
     </div>
   );

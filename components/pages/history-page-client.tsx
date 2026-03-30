@@ -8,7 +8,7 @@ import { HistoryFeed } from "@/components/history-feed";
 import { StackedBarChart } from "@/components/stacked-bar-chart";
 import { usePrIsmQueryState } from "@/hooks/use-pr-ism-query-state";
 import { usePrIsmWorkspace } from "@/hooks/use-pr-ism-workspace";
-import { buildActivityFeed, buildStackedSeries, filterRecords, getAvailableUsers, getRepositoryRecords, summarizeUsers } from "@/lib/analytics";
+import { buildActivityFeed, buildStackedSeries, filterRecords, getAvailableUsers, getRepositoryRecords, getVisibleWindow, summarizeUsers } from "@/lib/analytics";
 
 export function HistoryPageClient() {
   const { repositories, settings, ready } = usePrIsmWorkspace();
@@ -31,6 +31,7 @@ export function HistoryPageClient() {
   }
 
   const repository = repositories.find((item) => item.id === filters.repoId) ?? repositories[0];
+  const visibleWindow = getVisibleWindow(filters.range, filters.offset);
   const allRecords = getRepositoryRecords(repository);
   const availableUsers = getAvailableUsers(allRecords);
   const peopleFilterRecords = filterRecords(allRecords, filters.range, [], filters.offset);
@@ -64,9 +65,11 @@ export function HistoryPageClient() {
         data={stackedSeries}
         users={visibleUsers}
         metric={filters.metric}
+        repository={repository}
+        timeWindow={visibleWindow}
       />
 
-      <HistoryFeed records={activity} />
+      <HistoryFeed records={activity} repository={repository} timeWindow={visibleWindow} />
     </div>
   );
 }

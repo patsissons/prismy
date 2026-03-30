@@ -1,8 +1,7 @@
 import { ArrowDownRight, ArrowUpRight, CheckCircle2, Clock3, Minus } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { formatDurationDays } from "@/lib/utils";
+import { cn, formatDurationDays, getGitHubPullListUrl } from "@/lib/utils";
 
 interface Kpis {
   totalPrs: number;
@@ -11,44 +10,70 @@ interface Kpis {
   mergeRate: number;
 }
 
-export function MetricCards({ current, previous }: { current: Kpis; previous: Kpis }) {
+export function MetricCards({
+  current,
+  previous,
+  repository,
+  timeWindow
+}: {
+  current: Kpis;
+  previous: Kpis;
+  repository: { url: string };
+  timeWindow: { start: Date; end: Date };
+}) {
   return (
     <div className="grid gap-px bg-background/60 lg:grid-cols-3">
       <Card className="p-6 md:p-8">
-        <div className="text-xs uppercase tracking-[0.34em] text-muted-foreground">Total PRs</div>
-        <div className="mt-4 font-display text-5xl font-extrabold tracking-[-0.05em]">{current.totalPrs.toLocaleString()}</div>
-        <div className="mt-4">
-          <ComparisonBadge current={current.totalPrs} previous={previous.totalPrs} higherIsBetter />
-        </div>
+        <a href={getGitHubPullListUrl(repository, { window: timeWindow })} target="_blank" rel="noreferrer" className="block rounded-sm transition hover:bg-surface-high/20">
+          <div className="text-xs uppercase tracking-[0.34em] text-muted-foreground">Total PRs</div>
+          <div className="mt-4 font-display text-5xl font-extrabold tracking-[-0.05em]">{current.totalPrs.toLocaleString()}</div>
+          <div className="mt-4">
+            <ComparisonBadge current={current.totalPrs} previous={previous.totalPrs} higherIsBetter />
+          </div>
+        </a>
       </Card>
 
       <Card className="p-6 md:p-8">
-        <div className="text-xs uppercase tracking-[0.34em] text-muted-foreground">Merged PRs</div>
-        <div className="mt-4 font-display text-5xl font-extrabold tracking-[-0.05em]">{current.mergedPrs.toLocaleString()}</div>
-        <div className="mt-4 flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-secondary">
-            <CheckCircle2 className="h-4 w-4" />
-            <span className="text-sm font-semibold">{current.mergeRate.toFixed(1)}%</span>
-          </span>
-          <ComparisonBadge current={current.mergedPrs} previous={previous.mergedPrs} higherIsBetter />
-        </div>
+        <a
+          href={getGitHubPullListUrl(repository, { metric: "merged", window: timeWindow })}
+          target="_blank"
+          rel="noreferrer"
+          className="block rounded-sm transition hover:bg-surface-high/20"
+        >
+          <div className="text-xs uppercase tracking-[0.34em] text-muted-foreground">Merged PRs</div>
+          <div className="mt-4 font-display text-5xl font-extrabold tracking-[-0.05em]">{current.mergedPrs.toLocaleString()}</div>
+          <div className="mt-4 flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-secondary">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-sm font-semibold">{current.mergeRate.toFixed(1)}%</span>
+            </span>
+            <ComparisonBadge current={current.mergedPrs} previous={previous.mergedPrs} higherIsBetter />
+          </div>
+        </a>
       </Card>
 
       <Card className="p-6 md:p-8">
-        <div className="text-xs uppercase tracking-[0.34em] text-muted-foreground">Avg. Duration</div>
-        <div className="mt-4 font-display text-5xl font-extrabold tracking-[-0.05em]">{formatDurationDays(current.averageDurationHours)}</div>
-        <div className="mt-4 flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-tertiary">
-            <Clock3 className="h-4 w-4" />
-            <span className="text-sm font-semibold">Cycle time</span>
-          </span>
-          <ComparisonBadge
-            current={current.averageDurationHours}
-            previous={previous.averageDurationHours}
-            higherIsBetter={false}
-            formatDiff={(diff) => `${formatDurationDays(Math.abs(diff))}`}
-          />
-        </div>
+        <a
+          href={getGitHubPullListUrl(repository, { metric: "duration", window: timeWindow })}
+          target="_blank"
+          rel="noreferrer"
+          className="block rounded-sm transition hover:bg-surface-high/20"
+        >
+          <div className="text-xs uppercase tracking-[0.34em] text-muted-foreground">Avg. Duration</div>
+          <div className="mt-4 font-display text-5xl font-extrabold tracking-[-0.05em]">{formatDurationDays(current.averageDurationHours)}</div>
+          <div className="mt-4 flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-tertiary">
+              <Clock3 className="h-4 w-4" />
+              <span className="text-sm font-semibold">Cycle time</span>
+            </span>
+            <ComparisonBadge
+              current={current.averageDurationHours}
+              previous={previous.averageDurationHours}
+              higherIsBetter={false}
+              formatDiff={(diff) => `${formatDurationDays(Math.abs(diff))}`}
+            />
+          </div>
+        </a>
       </Card>
     </div>
   );

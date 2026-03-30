@@ -2,20 +2,24 @@ import { useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import type { BucketSeriesDatum, MetricKey } from "@/lib/types";
-import { formatDurationDays } from "@/lib/utils";
+import { formatDurationDays, getGitHubPullListUrl } from "@/lib/utils";
 
 export function StackedBarChart({
   title,
   subtitle,
   data,
   users,
-  metric
+  metric,
+  repository,
+  timeWindow
 }: {
   title: string;
   subtitle: string;
   data: BucketSeriesDatum[];
   users: { login: string; name: string; color: string }[];
   metric: MetricKey;
+  repository: { url: string };
+  timeWindow: { start: Date; end: Date };
 }) {
   const maxValue = Math.max(...data.map((item) => item.totalValue), 1);
   const [hoveredSegment, setHoveredSegment] = useState<{
@@ -67,9 +71,11 @@ export function StackedBarChart({
                     }
 
                     return (
-                      <button
+                      <a
                         key={user.login}
-                        type="button"
+                        href={getGitHubPullListUrl(repository, { authorLogin: user.login, metric, window: timeWindow })}
+                        target="_blank"
+                        rel="noreferrer"
                         className="w-full transition hover:brightness-110 focus:brightness-110"
                         style={{ height: `${height}%`, backgroundColor: user.color }}
                         aria-label={describeSegment(bucket.bucketLabel, user.name, value, bucket.totalValue, totalsByUser[user.login] ?? 0, metric)}

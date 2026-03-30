@@ -1,8 +1,16 @@
 import { Card } from "@/components/ui/card";
-import type { PullRequestRecord } from "@/lib/types";
-import { formatDurationDays, formatRelativeTime } from "@/lib/utils";
+import type { MetricKey, PullRequestRecord } from "@/lib/types";
+import { formatDurationDays, formatRelativeTime, getGitHubPullListUrl } from "@/lib/utils";
 
-export function HistoryFeed({ records }: { records: PullRequestRecord[] }) {
+export function HistoryFeed({
+  records,
+  repository,
+  timeWindow
+}: {
+  records: PullRequestRecord[];
+  repository: { url: string };
+  timeWindow: { start: Date; end: Date };
+}) {
   return (
     <div>
       <h3 className="font-display text-2xl font-bold tracking-[-0.04em]">Recent Pull Requests</h3>
@@ -25,8 +33,30 @@ export function HistoryFeed({ records }: { records: PullRequestRecord[] }) {
                     #{record.number} opened {formatRelativeTime(record.createdAt)}
                   </div>
                 </div>
-                <div className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{record.authorName}</div>
-                <div className="text-sm uppercase tracking-[0.18em] text-foreground/82">{record.state}</div>
+                <div>
+                  <a
+                    href={getGitHubPullListUrl(repository, {
+                      authorLogin: record.authorLogin,
+                      metric: (record.mergedAt ? "merged" : "created") as MetricKey,
+                      window: timeWindow
+                    })}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm uppercase tracking-[0.18em] text-muted-foreground hover:text-primary"
+                  >
+                    {record.authorName}
+                  </a>
+                </div>
+                <div>
+                  <a
+                    href={getGitHubPullListUrl(repository, { state: record.state === "open" ? "inReview" : record.state, window: timeWindow })}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm uppercase tracking-[0.18em] text-foreground/82 hover:text-primary"
+                  >
+                    {record.state}
+                  </a>
+                </div>
                 <div className="text-sm uppercase tracking-[0.18em] text-foreground/82">
                   {formatDurationDays(getDuration(record))}
                 </div>

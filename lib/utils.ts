@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import type { MetricKey, PullRequestState } from "@/lib/types";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -64,4 +66,75 @@ export function parseGitHubUrl(input: string) {
   } catch {
     return null;
   }
+}
+
+export function getGitHubRepoUrl(repository: { url: string }) {
+  return repository.url.replace(/\/+$/, "");
+}
+
+export function getGitHubPullListUrl(
+  repository: { url: string },
+  options: {
+    authorLogin?: string;
+    metric?: MetricKey;
+    state?: PullRequestState | "inReview";
+    window?: { start: Date; end: Date };
+  } = {}
+) {
+  const baseUrl = `${getGitHubRepoUrl(repository)}/pulls`;
+  const query = ["is:pr"];
+
+  if (options.authorLogin) {
+    query.push(`author:${options.authorLogin}`);
+  }
+
+  if (options.state === "merged" || options.metric === "merged" || options.metric === "duration") {
+    query.push("is:merged");
+  } else if (options.state === "draft") {
+    query.push("is:draft");
+  } else if (options.state === "open" || options.state === "inReview") {
+    query.push("is:open");
+  } else if (options.state === "closed") {
+    query.push("is:closed");
+  }
+
+  if (options.window) {
+    query.push(
+      getGitHubDateQualifier({
+        metric: options.metric,
+        state: options.state,
+        window: options.window
+      })
+    );
+  }
+
+  const url = new URL(baseUrl);
+  url.searchParams.set("q", query.join(" "));
+  return url.toString();
+}
+
+function getGitHubDateQualifier(options: {
+  metric?: MetricKey;
+  state?: PullRequestState | "inReview";
+  window: { start: Date; end: Date };
+}) {
+  const start = formatDateOnly(options.window.start);
+  const end = formatDateOnly(options.window.end);
+
+  if (options.state === "merged" || options.metric === "merged" || options.metric === "duration") {
+    return `merged:${start}..${end}`;
+  }
+
+  if (options.state === "closed") {
+    return `closed:${start}..${end}`;
+  }
+
+  return `created:${start}..${end}`;
+}
+
+function formatDateOnly(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

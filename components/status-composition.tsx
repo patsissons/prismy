@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, getGitHubPullListUrl } from "@/lib/utils";
 
 interface StatusData {
   inReview: number;
@@ -7,11 +7,21 @@ interface StatusData {
   merged: number;
 }
 
-export function StatusComposition({ current, previous }: { current: StatusData; previous: StatusData }) {
+export function StatusComposition({
+  current,
+  previous,
+  repository,
+  timeWindow
+}: {
+  current: StatusData;
+  previous: StatusData;
+  repository: { url: string };
+  timeWindow: { start: Date; end: Date };
+}) {
   const blocks = [
-    { label: "In Review", value: current.inReview, prev: previous.inReview, color: "bg-primary" },
-    { label: "Draft", value: current.draft, prev: previous.draft, color: "bg-secondary" },
-    { label: "Merged", value: current.merged, prev: previous.merged, color: "bg-tertiary" }
+    { label: "In Review", value: current.inReview, prev: previous.inReview, color: "bg-primary", state: "inReview" as const },
+    { label: "Draft", value: current.draft, prev: previous.draft, color: "bg-secondary", state: "draft" as const },
+    { label: "Merged", value: current.merged, prev: previous.merged, color: "bg-tertiary", state: "merged" as const }
   ];
 
   return (
@@ -23,19 +33,26 @@ export function StatusComposition({ current, previous }: { current: StatusData; 
 
           return (
             <Card key={block.label} className="min-w-0 p-6 text-center">
-              <div className={`mx-auto h-2 w-20 rounded-sm ${block.color}`} />
-              <div className="mt-6 font-display text-5xl font-extrabold tracking-[-0.04em]">{block.value}%</div>
-              <div className="mt-2 text-sm uppercase tracking-[0.2em] text-muted-foreground">{block.label}</div>
-              {diff !== 0 && (
-                <div
-                  className={cn(
-                    "mt-3 text-xs font-medium",
-                    diff > 0 ? "text-muted-foreground" : "text-muted-foreground"
-                  )}
-                >
-                  {diff > 0 ? "+" : "−"}{Math.abs(diff)}pp vs prev
-                </div>
-              )}
+              <a
+                href={getGitHubPullListUrl(repository, { state: block.state, window: timeWindow })}
+                target="_blank"
+                rel="noreferrer"
+                className="block rounded-sm transition hover:bg-surface-high/20"
+              >
+                <div className={`mx-auto h-2 w-20 rounded-sm ${block.color}`} />
+                <div className="mt-6 font-display text-5xl font-extrabold tracking-[-0.04em]">{block.value}%</div>
+                <div className="mt-2 text-sm uppercase tracking-[0.2em] text-muted-foreground">{block.label}</div>
+                {diff !== 0 && (
+                  <div
+                    className={cn(
+                      "mt-3 text-xs font-medium",
+                      diff > 0 ? "text-muted-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {diff > 0 ? "+" : "−"}{Math.abs(diff)}pp vs prev
+                  </div>
+                )}
+              </a>
             </Card>
           );
         })}

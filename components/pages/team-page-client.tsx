@@ -8,7 +8,7 @@ import { StackedBarChart } from "@/components/stacked-bar-chart";
 import { TeamSummary } from "@/components/team-summary";
 import { usePrIsmQueryState } from "@/hooks/use-pr-ism-query-state";
 import { usePrIsmWorkspace } from "@/hooks/use-pr-ism-workspace";
-import { buildStackedSeries, filterRecords, getAvailableUsers, getRepositoryRecords, summarizeUsers } from "@/lib/analytics";
+import { buildStackedSeries, filterRecords, getAvailableUsers, getRepositoryRecords, getVisibleWindow, summarizeUsers } from "@/lib/analytics";
 
 export function TeamPageClient() {
   const { repositories, settings, ready } = usePrIsmWorkspace();
@@ -31,6 +31,7 @@ export function TeamPageClient() {
   }
 
   const repository = repositories.find((item) => item.id === filters.repoId) ?? repositories[0];
+  const visibleWindow = getVisibleWindow(filters.range, filters.offset);
   const allRecords = getRepositoryRecords(repository);
   const availableUsers = getAvailableUsers(allRecords);
   const peopleFilterRecords = filterRecords(allRecords, filters.range, [], filters.offset);
@@ -64,9 +65,11 @@ export function TeamPageClient() {
         data={stackedSeries}
         users={visibleUsers}
         metric={filters.metric}
+        repository={repository}
+        timeWindow={visibleWindow}
       />
 
-      <TeamSummary summaries={summaries} />
+      <TeamSummary summaries={summaries} repository={repository} metric={filters.metric} timeWindow={visibleWindow} />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { ArrowRight, Flame } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import type { PullRequestRecord } from "@/lib/types";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatRelativeTime, getGitHubPullListUrl } from "@/lib/utils";
 
 const accentByPriority = {
   critical: "bg-[#ff716c]",
@@ -10,7 +10,15 @@ const accentByPriority = {
   normal: "bg-primary"
 };
 
-export function PriorityReviews({ items }: { items: PullRequestRecord[] }) {
+export function PriorityReviews({
+  items,
+  repository,
+  timeWindow
+}: {
+  items: PullRequestRecord[];
+  repository: { url: string };
+  timeWindow: { start: Date; end: Date };
+}) {
   return (
     <div>
       <h3 className="font-display text-2xl font-bold tracking-[-0.04em]">Priority Reviews</h3>
@@ -22,7 +30,15 @@ export function PriorityReviews({ items }: { items: PullRequestRecord[] }) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-2xl font-semibold tracking-[-0.04em]">{item.title}</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  #{item.number} opened {formatRelativeTime(item.createdAt)} by {item.authorName}
+                  #{item.number} opened {formatRelativeTime(item.createdAt)} by{" "}
+                  <a
+                    href={getGitHubPullListUrl(repository, { authorLogin: item.authorLogin, state: "inReview", window: timeWindow })}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-primary"
+                  >
+                    {item.authorName}
+                  </a>
                 </div>
               </div>
               <a href={item.htmlUrl} target="_blank" rel="noreferrer" className="grid h-10 w-10 place-items-center rounded-sm bg-surface-high">
