@@ -4,11 +4,12 @@ import { startTransition, useCallback, useMemo } from "react";
 import type { Route } from "next";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import type { BucketSize, DashboardFilters, MetricKey, RangePreset } from "@/lib/types";
+import type { BucketSize, DashboardFilters, MetricKey, RangePreset, SortOrder } from "@/lib/types";
 
 const RANGE_PRESETS: RangePreset[] = ["7d", "30d", "90d", "180d"];
 const METRICS: MetricKey[] = ["created", "merged", "duration"];
 const BUCKETS: BucketSize[] = ["day", "week", "month"];
+const SORT_ORDERS: SortOrder[] = ["asc", "desc"];
 
 export function usePrIsmQueryState(defaultRange: RangePreset) {
   const searchParams = useSearchParams();
@@ -21,6 +22,7 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
     const bucket = searchParams.get("bucket");
     const users = searchParams.get("users");
     const offset = searchParams.get("offset");
+    const peopleSort = searchParams.get("peopleSort");
     const parsedOffset = offset !== null ? parseInt(offset, 10) : 0;
 
     return {
@@ -29,7 +31,8 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
       metric: METRICS.includes(metric as MetricKey) ? (metric as MetricKey) : "created",
       bucket: BUCKETS.includes(bucket as BucketSize) ? (bucket as BucketSize) : inferBucket(range as RangePreset | null, defaultRange),
       users: users ? users.split(",").filter(Boolean) : [],
-      offset: Number.isFinite(parsedOffset) ? parsedOffset : 0
+      offset: Number.isFinite(parsedOffset) ? parsedOffset : 0,
+      peopleSort: SORT_ORDERS.includes(peopleSort as SortOrder) ? (peopleSort as SortOrder) : "desc"
     };
   }, [defaultRange, searchParams]);
 
@@ -63,6 +66,10 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
 
       if (updates.offset !== undefined) {
         updates.offset !== 0 ? next.set("offset", String(updates.offset)) : next.delete("offset");
+      }
+
+      if (updates.peopleSort) {
+        updates.peopleSort === "desc" ? next.delete("peopleSort") : next.set("peopleSort", updates.peopleSort);
       }
 
       startTransition(() => {

@@ -17,6 +17,7 @@ import {
   getPriorityReviews,
   getRepositoryRecords,
   getStatusComposition,
+  summarizeUsers,
   summarizeKpis
 } from "@/lib/analytics";
 
@@ -46,23 +47,28 @@ export function OverviewPageClient() {
   const repository = repositories.find((item) => item.id === filters.repoId) ?? repositories[0];
   const allRecords = getRepositoryRecords(repository);
   const availableUsers = getAvailableUsers(allRecords);
+  const peopleFilterRecords = filterRecords(allRecords, filters.range, [], filters.offset);
+  const peopleOptions = summarizeUsers(peopleFilterRecords, availableUsers, filters.metric, filters.peopleSort);
   const visibleUsers = filters.users.length
     ? availableUsers.filter((user) => filters.users.includes(user.login))
     : availableUsers;
   const filteredRecords = filterRecords(allRecords, filters.range, filters.users, filters.offset);
+  const previousRecords = filterRecords(allRecords, filters.range, filters.users, filters.offset - 1);
   const kpis = summarizeKpis(filteredRecords);
+  const previousKpis = summarizeKpis(previousRecords);
   const priorityReviews = getPriorityReviews(filteredRecords);
   const status = getStatusComposition(filteredRecords);
+  const previousStatus = getStatusComposition(previousRecords);
   const stackedSeries = buildStackedSeries(filteredRecords, filters.metric, filters.bucket, visibleUsers, filters.range, filters.offset);
 
   return (
     <div className="space-y-8">
-      <MetricCards {...kpis} />
+      <MetricCards current={kpis} previous={previousKpis} />
 
       <DashboardFilters
         repositories={repositories}
         filters={{ ...filters, repoId: repository.id }}
-        availableUsers={availableUsers}
+        peopleOptions={peopleOptions}
         onChange={setFilters}
       />
 
@@ -75,7 +81,7 @@ export function OverviewPageClient() {
       />
 
       <div className="space-y-8">
-        <StatusComposition {...status} />
+        <StatusComposition current={status} previous={previousStatus} />
         <PriorityReviews items={priorityReviews} />
       </div>
     </div>

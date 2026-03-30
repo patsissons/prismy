@@ -8,7 +8,7 @@ import { HistoryFeed } from "@/components/history-feed";
 import { StackedBarChart } from "@/components/stacked-bar-chart";
 import { usePrIsmQueryState } from "@/hooks/use-pr-ism-query-state";
 import { usePrIsmWorkspace } from "@/hooks/use-pr-ism-workspace";
-import { buildActivityFeed, buildStackedSeries, filterRecords, getAvailableUsers, getRepositoryRecords } from "@/lib/analytics";
+import { buildActivityFeed, buildStackedSeries, filterRecords, getAvailableUsers, getRepositoryRecords, summarizeUsers } from "@/lib/analytics";
 
 export function HistoryPageClient() {
   const { repositories, settings, ready } = usePrIsmWorkspace();
@@ -33,12 +33,14 @@ export function HistoryPageClient() {
   const repository = repositories.find((item) => item.id === filters.repoId) ?? repositories[0];
   const allRecords = getRepositoryRecords(repository);
   const availableUsers = getAvailableUsers(allRecords);
+  const peopleFilterRecords = filterRecords(allRecords, filters.range, [], filters.offset);
+  const peopleOptions = summarizeUsers(peopleFilterRecords, availableUsers, filters.metric, filters.peopleSort);
   const visibleUsers = filters.users.length
     ? availableUsers.filter((user) => filters.users.includes(user.login))
     : availableUsers;
-  const filteredRecords = filterRecords(allRecords, filters.range, filters.users);
+  const filteredRecords = filterRecords(allRecords, filters.range, filters.users, filters.offset);
   const activity = buildActivityFeed(filteredRecords);
-  const stackedSeries = buildStackedSeries(filteredRecords, filters.metric, filters.bucket, visibleUsers, filters.range);
+  const stackedSeries = buildStackedSeries(filteredRecords, filters.metric, filters.bucket, visibleUsers, filters.range, filters.offset);
 
   return (
     <div className="space-y-8">
@@ -52,7 +54,7 @@ export function HistoryPageClient() {
       <DashboardFilters
         repositories={repositories}
         filters={{ ...filters, repoId: repository.id }}
-        availableUsers={availableUsers}
+        peopleOptions={peopleOptions}
         onChange={setFilters}
       />
 

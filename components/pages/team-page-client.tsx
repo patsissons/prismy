@@ -33,12 +33,14 @@ export function TeamPageClient() {
   const repository = repositories.find((item) => item.id === filters.repoId) ?? repositories[0];
   const allRecords = getRepositoryRecords(repository);
   const availableUsers = getAvailableUsers(allRecords);
+  const peopleFilterRecords = filterRecords(allRecords, filters.range, [], filters.offset);
+  const peopleOptions = summarizeUsers(peopleFilterRecords, availableUsers, filters.metric, filters.peopleSort);
   const visibleUsers = filters.users.length
     ? availableUsers.filter((user) => filters.users.includes(user.login))
     : availableUsers;
-  const filteredRecords = filterRecords(allRecords, filters.range, filters.users);
-  const summaries = summarizeUsers(filteredRecords, visibleUsers);
-  const stackedSeries = buildStackedSeries(filteredRecords, filters.metric, filters.bucket, visibleUsers, filters.range);
+  const filteredRecords = filterRecords(allRecords, filters.range, filters.users, filters.offset);
+  const summaries = summarizeUsers(filteredRecords, visibleUsers, filters.metric, filters.peopleSort);
+  const stackedSeries = buildStackedSeries(filteredRecords, filters.metric, filters.bucket, visibleUsers, filters.range, filters.offset);
 
   return (
     <div className="space-y-8">
@@ -52,7 +54,7 @@ export function TeamPageClient() {
       <DashboardFilters
         repositories={repositories}
         filters={{ ...filters, repoId: repository.id }}
-        availableUsers={availableUsers}
+        peopleOptions={peopleOptions}
         onChange={setFilters}
       />
 

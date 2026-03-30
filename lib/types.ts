@@ -1,6 +1,7 @@
 export type MetricKey = "created" | "merged" | "duration";
 export type RangePreset = "7d" | "30d" | "90d" | "180d";
 export type BucketSize = "day" | "week" | "month";
+export type SortOrder = "asc" | "desc";
 export type PullRequestState = "open" | "merged" | "draft" | "closed";
 
 export interface PullRequestRecord {
@@ -66,4 +67,5 @@ export interface DashboardFilters {
   bucket: BucketSize;
   users: string[];
   offset: number;
+  peopleSort: SortOrder;
 }

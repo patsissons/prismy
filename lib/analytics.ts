@@ -5,6 +5,7 @@ import type {
   PullRequestRecord,
   RangePreset,
   RepositoryConnection,
+  SortOrder,
   UserSummary
 } from "@/lib/types";
 
@@ -108,7 +109,12 @@ export function buildStackedSeries(
   return Array.from(bucketMap.values());
 }
 
-export function summarizeUsers(records: PullRequestRecord[], users: { login: string; name: string; color: string }[]): UserSummary[] {
+export function summarizeUsers(
+  records: PullRequestRecord[],
+  users: { login: string; name: string; color: string }[],
+  metric: MetricKey = "created",
+  sortOrder: SortOrder = "desc"
+): UserSummary[] {
   return users
     .map((user) => {
       const userRecords = records.filter((record) => record.authorLogin === user.login);
@@ -126,7 +132,7 @@ export function summarizeUsers(records: PullRequestRecord[], users: { login: str
         openCount: userRecords.filter((record) => record.state === "open" || record.state === "draft").length
       };
     })
-    .sort((a, b) => b.created - a.created);
+    .sort((a, b) => compareUserSummaries(a, b, metric, sortOrder));
 }
 
 export function summarizeKpis(records: PullRequestRecord[]) {
@@ -197,6 +203,30 @@ function buildBuckets(start: Date, end: Date, bucketSize: BucketSize): BucketSer
 
 function dedupeBuckets(buckets: BucketSeriesDatum[]) {
   return Array.from(new Map(buckets.map((bucket) => [bucket.bucketKey, bucket])).values());
+}
+
+function compareUserSummaries(a: UserSummary, b: UserSummary, metric: MetricKey, sortOrder: SortOrder) {
+  const direction = sortOrder === "asc" ? 1 : -1;
+  const valueA = getSummaryMetricValue(a, metric);
+  const valueB = getSummaryMetricValue(b, metric);
+
+  if (valueA !== valueB) {
+    return (valueA - valueB) * direction;
+  }
+
+  return a.name.localeCompare(b.name);
+}
+
+function getSummaryMetricValue(summary: UserSummary, metric: MetricKey) {
+  if (metric === "merged") {
+    return summary.merged;
+  }
+
+  if (metric === "duration") {
+    return summary.averageDurationHours;
+  }
+
+  return summary.created;
 }
 
 function getBucketKey(date: Date, bucketSize: BucketSize) {

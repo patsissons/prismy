@@ -1,12 +1,12 @@
 "use client";
 
-import { ChevronDown, ChevronLeft, ChevronRight, Filter, Layers3 } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, ChevronDown, ChevronLeft, ChevronRight, Filter, Layers3 } from "lucide-react";
 
 import { getVisibleWindow } from "@/lib/analytics";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { BucketSize, DashboardFilters as DashboardFilterState, MetricKey, RangePreset, RepositoryConnection } from "@/lib/types";
+import type { BucketSize, DashboardFilters as DashboardFilterState, MetricKey, RangePreset, RepositoryConnection, UserSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const ranges: { label: string; value: RangePreset }[] = [
@@ -31,12 +31,12 @@ const buckets: { label: string; value: BucketSize }[] = [
 export function DashboardFilters({
   repositories,
   filters,
-  availableUsers,
+  peopleOptions,
   onChange
 }: {
   repositories: RepositoryConnection[];
   filters: DashboardFilterState;
-  availableUsers: { login: string; name: string; color: string }[];
+  peopleOptions: UserSummary[];
   onChange: (updates: Partial<DashboardFilterState>) => void;
 }) {
   return (
@@ -151,7 +151,18 @@ export function DashboardFilters({
         </div>
 
         <div className="min-w-0 space-y-4 bg-surface-low p-5">
-          <div className="font-body text-xs uppercase tracking-[0.24em] text-muted-foreground">People Filter</div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="font-body text-xs uppercase tracking-[0.24em] text-muted-foreground">People Filter</div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2.5"
+              onClick={() => onChange({ peopleSort: filters.peopleSort === "desc" ? "asc" : "desc" })}
+              aria-label={`Sort people ${filters.peopleSort === "desc" ? "ascending" : "descending"} by ${filters.metric}`}
+            >
+              {filters.peopleSort === "desc" ? <ArrowDownAZ className="h-4 w-4" /> : <ArrowUpAZ className="h-4 w-4" />}
+            </Button>
+          </div>
           <div className="max-h-72 space-y-2 overflow-y-auto pr-2">
             <button
               onClick={() => onChange({ users: [] })}
@@ -162,7 +173,7 @@ export function DashboardFilters({
             >
               All users
             </button>
-            {availableUsers.map((user) => {
+            {peopleOptions.map((user) => {
               const selected = filters.users.includes(user.login);
 
               return (
