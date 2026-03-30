@@ -2,7 +2,7 @@ import { ArrowRight, Flame } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import type { PullRequestRecord } from "@/lib/types";
-import { formatRelativeTime, getGitHubPullListUrl } from "@/lib/utils";
+import { formatRelativeTime, getGitHubUserUrl } from "@/lib/utils";
 
 const accentByPriority = {
   critical: "bg-[#ff716c]",
@@ -12,8 +12,8 @@ const accentByPriority = {
 
 export function PriorityReviews({
   items,
-  repository,
-  timeWindow
+  repository: _repository,
+  timeWindow: _timeWindow
 }: {
   items: PullRequestRecord[];
   repository: { url: string };
@@ -32,7 +32,7 @@ export function PriorityReviews({
                 <div className="mt-1 text-sm text-muted-foreground">
                   #{item.number} opened {formatRelativeTime(item.createdAt)} by{" "}
                   <a
-                    href={getGitHubPullListUrl(repository, { authorLogin: item.authorLogin, state: "inReview", window: timeWindow })}
+                    href={getGitHubUserUrl(item.authorLogin)}
                     target="_blank"
                     rel="noreferrer"
                     className="hover:text-primary"

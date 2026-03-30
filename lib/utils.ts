@@ -72,6 +72,10 @@ export function getGitHubRepoUrl(repository: { url: string }) {
   return repository.url.replace(/\/+$/, "");
 }
 
+export function getGitHubUserUrl(login: string) {
+  return `https://github.com/${login}`;
+}
+
 export function getGitHubPullListUrl(
   repository: { url: string },
   options: {

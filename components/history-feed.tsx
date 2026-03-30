@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
-import type { MetricKey, PullRequestRecord } from "@/lib/types";
-import { formatDurationDays, formatRelativeTime, getGitHubPullListUrl } from "@/lib/utils";
+import type { PullRequestRecord } from "@/lib/types";
+import { formatDurationDays, formatRelativeTime, getGitHubPullListUrl, getGitHubUserUrl } from "@/lib/utils";
 
 export function HistoryFeed({
   records,
@@ -35,11 +35,7 @@ export function HistoryFeed({
                 </div>
                 <div>
                   <a
-                    href={getGitHubPullListUrl(repository, {
-                      authorLogin: record.authorLogin,
-                      metric: (record.mergedAt ? "merged" : "created") as MetricKey,
-                      window: timeWindow
-                    })}
+                    href={getGitHubUserUrl(record.authorLogin)}
                     target="_blank"
                     rel="noreferrer"
                     className="text-sm uppercase tracking-[0.18em] text-muted-foreground hover:text-primary"
@@ -49,7 +45,7 @@ export function HistoryFeed({
                 </div>
                 <div>
                   <a
-                    href={getGitHubPullListUrl(repository, { state: record.state === "open" ? "inReview" : record.state, window: timeWindow })}
+                    href={getGitHubPullListUrl(repository, { state: record.state === "open" ? "inReview" : record.state })}
                     target="_blank"
                     rel="noreferrer"
                     className="text-sm uppercase tracking-[0.18em] text-foreground/82 hover:text-primary"
