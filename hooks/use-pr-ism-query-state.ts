@@ -1,9 +1,11 @@
 "use client";
 
-import { startTransition, useCallback, useMemo } from "react";
+import { startTransition, useCallback, useEffect, useMemo } from "react";
 import type { Route } from "next";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useLocalStorageState } from "@/hooks/use-local-storage-state";
+import { loadLastSelectedRepositoryId, saveLastSelectedRepositoryId } from "@/lib/storage";
 import type { BucketSize, DashboardFilters, MetricKey, RangePreset, SortOrder } from "@/lib/types";
 
 const RANGE_PRESETS: RangePreset[] = ["7d", "30d", "90d", "180d"];
@@ -15,6 +17,10 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const [lastSelectedRepositoryId, setLastSelectedRepositoryId, repoPreferenceReady] = useLocalStorageState(
+    loadLastSelectedRepositoryId,
+    saveLastSelectedRepositoryId
+  );
 
   const filters = useMemo<DashboardFilters>(() => {
     const range = searchParams.get("range");
@@ -26,7 +32,7 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
     const parsedOffset = offset !== null ? parseInt(offset, 10) : 0;
 
     return {
-      repoId: searchParams.get("repo"),
+      repoId: searchParams.get("repo") ?? lastSelectedRepositoryId,
       range: RANGE_PRESETS.includes(range as RangePreset) ? (range as RangePreset) : defaultRange,
       metric: METRICS.includes(metric as MetricKey) ? (metric as MetricKey) : "created",
       bucket: BUCKETS.includes(bucket as BucketSize) ? (bucket as BucketSize) : inferBucket(range as RangePreset | null, defaultRange),
@@ -34,7 +40,15 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
       offset: Number.isFinite(parsedOffset) ? parsedOffset : 0,
       peopleSort: SORT_ORDERS.includes(peopleSort as SortOrder) ? (peopleSort as SortOrder) : "desc"
     };
-  }, [defaultRange, searchParams]);
+  }, [defaultRange, lastSelectedRepositoryId, searchParams]);
+
+  useEffect(() => {
+    if (!repoPreferenceReady || !filters.repoId) {
+      return;
+    }
+
+    setLastSelectedRepositoryId(filters.repoId);
+  }, [filters.repoId, repoPreferenceReady, setLastSelectedRepositoryId]);
 
   const setFilters = useCallback(
     (updates: Partial<DashboardFilters>) => {
@@ -79,7 +93,7 @@ export function usePrIsmQueryState(defaultRange: RangePreset) {
     [defaultRange, pathname, router, searchParams]
   );
 
-  return { filters, setFilters };
+  return { filters, setFilters, ready: repoPreferenceReady };
 }
 
 function inferBucket(range: RangePreset | null, fallback: RangePreset): BucketSize {

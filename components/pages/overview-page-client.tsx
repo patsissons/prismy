@@ -24,10 +24,10 @@ import {
 
 export function OverviewPageClient() {
   const { repositories, settings, ready } = usePrIsmWorkspace();
-  const { filters, setFilters } = usePrIsmQueryState(settings.defaultRange);
+  const { filters, setFilters, ready: queryReady } = usePrIsmQueryState(settings.defaultRange);
 
   useEffect(() => {
-    if (!ready || !repositories.length) {
+    if (!ready || !queryReady || !repositories.length) {
       return;
     }
 
@@ -35,9 +35,9 @@ export function OverviewPageClient() {
     if (!filters.repoId || !match) {
       setFilters({ repoId: repositories[0].id });
     }
-  }, [filters.repoId, ready, repositories, setFilters]);
+  }, [filters.repoId, queryReady, ready, repositories, setFilters]);
 
-  if (!ready) {
+  if (!ready || !queryReady) {
     return null;
   }
 

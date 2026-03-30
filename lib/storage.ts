@@ -2,6 +2,7 @@ import type { AppSettings, RepositoryConnection } from "@/lib/types";
 
 const REPOSITORIES_KEY = "pr-ism.repositories";
 const SETTINGS_KEY = "pr-ism.settings";
+const LAST_SELECTED_REPOSITORY_KEY = "pr-ism.last-selected-repository";
 
 export const defaultSettings: AppSettings = {
   authToken: "",
@@ -55,4 +56,25 @@ export function saveSettings(settings: AppSettings) {
   }
 
   window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+export function loadLastSelectedRepositoryId() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem(LAST_SELECTED_REPOSITORY_KEY);
+}
+
+export function saveLastSelectedRepositoryId(repositoryId: string | null) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!repositoryId) {
+    window.localStorage.removeItem(LAST_SELECTED_REPOSITORY_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(LAST_SELECTED_REPOSITORY_KEY, repositoryId);
 }

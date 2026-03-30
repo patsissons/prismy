@@ -12,17 +12,17 @@ import { buildActivityFeed, buildStackedSeries, filterRecords, getAvailableUsers
 
 export function HistoryPageClient() {
   const { repositories, settings, ready } = usePrIsmWorkspace();
-  const { filters, setFilters } = usePrIsmQueryState(settings.defaultRange);
+  const { filters, setFilters, ready: queryReady } = usePrIsmQueryState(settings.defaultRange);
 
   useEffect(() => {
-    if (!ready || !repositories.length || filters.repoId) {
+    if (!ready || !queryReady || !repositories.length || filters.repoId) {
       return;
     }
 
     setFilters({ repoId: repositories[0].id, metric: "created" });
-  }, [filters.repoId, ready, repositories, setFilters]);
+  }, [filters.repoId, queryReady, ready, repositories, setFilters]);
 
-  if (!ready) {
+  if (!ready || !queryReady) {
     return null;
   }
 
