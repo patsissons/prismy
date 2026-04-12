@@ -13,7 +13,7 @@ const METRICS: MetricKey[] = ["created", "merged", "duration"];
 const BUCKETS: BucketSize[] = ["day", "week", "month"];
 const SORT_ORDERS: SortOrder[] = ["asc", "desc"];
 
-export function usePrIsmQueryState(defaultRange: RangePreset) {
+export function usePrIsmyQueryState(defaultRange: RangePreset) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();

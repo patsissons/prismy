@@ -18,7 +18,7 @@ const navigation = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const title = pathname === "/repositories" ? "Repositories" : "PR-ism";
+  const title = pathname === "/repositories" ? "Repositories" : "PR-ismy";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               {!sidebarCollapsed ? (
                 <div>
-                  <div className="font-display text-[2rem] font-extrabold tracking-[-0.04em]">PR-ism</div>
+                  <div className="font-display text-[2rem] font-extrabold tracking-[-0.04em]">PR-ismy</div>
                   <div className="font-body text-xs uppercase tracking-[0.35em] text-muted-foreground">Data Editorial</div>
                 </div>
               ) : null}
@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center justify-between gap-3 md:hidden">
                 <div>
-                  <div className="font-display text-3xl font-extrabold tracking-[-0.04em]">PR-ism</div>
+                  <div className="font-display text-3xl font-extrabold tracking-[-0.04em]">PR-ismy</div>
                   <div className="font-body text-[11px] uppercase tracking-[0.35em] text-muted-foreground">Data Editorial</div>
                 </div>
                 <Badge className="bg-primary/12 text-primary">Local state</Badge>

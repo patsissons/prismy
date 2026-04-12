@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PR-ism",
+  title: "PR-ismy",
   description: "Local-first PR analytics for GitHub repositories."
 };
 

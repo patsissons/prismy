@@ -1,8 +1,8 @@
 import type { AppSettings, RepositoryConnection } from "@/lib/types";
 
-const REPOSITORIES_KEY = "pr-ism.repositories";
-const SETTINGS_KEY = "pr-ism.settings";
-const LAST_SELECTED_REPOSITORY_KEY = "pr-ism.last-selected-repository";
+const REPOSITORIES_KEY = "pr-ismy.repositories";
+const SETTINGS_KEY = "pr-ismy.settings";
+const LAST_SELECTED_REPOSITORY_KEY = "pr-ismy.last-selected-repository";
 
 export const defaultSettings: AppSettings = {
   authToken: "",

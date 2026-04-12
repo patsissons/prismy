@@ -6,13 +6,13 @@ import { DashboardFilters } from "@/components/dashboard-filters";
 import { EmptyDashboard } from "@/components/empty-dashboard";
 import { HistoryFeed } from "@/components/history-feed";
 import { StackedBarChart } from "@/components/stacked-bar-chart";
-import { usePrIsmQueryState } from "@/hooks/use-pr-ism-query-state";
-import { usePrIsmWorkspace } from "@/hooks/use-pr-ism-workspace";
+import { usePrIsmyQueryState } from "@/hooks/use-pr-ismy-query-state";
+import { usePrIsmyWorkspace } from "@/hooks/use-pr-ismy-workspace";
 import { buildActivityFeed, buildStackedSeries, filterRecords, getAvailableUsers, getRepositoryRecords, getVisibleWindow, summarizeUsers } from "@/lib/analytics";
 
 export function HistoryPageClient() {
-  const { repositories, settings, ready } = usePrIsmWorkspace();
-  const { filters, setFilters, ready: queryReady } = usePrIsmQueryState(settings.defaultRange);
+  const { repositories, settings, ready } = usePrIsmyWorkspace();
+  const { filters, setFilters, ready: queryReady } = usePrIsmyQueryState(settings.defaultRange);
 
   useEffect(() => {
     if (!ready || !queryReady || !repositories.length || filters.repoId) {

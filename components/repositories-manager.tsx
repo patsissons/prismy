@@ -17,7 +17,7 @@ const rangeOptions: { label: string; value: RangePreset }[] = [
 ];
 
 const githubPatUrl =
-  "https://github.com/settings/tokens/new?description=PR-ism&scopes=repo";
+  "https://github.com/settings/tokens/new?description=PR-ismy&scopes=repo";
 
 export function RepositoriesManager({
   repositories,

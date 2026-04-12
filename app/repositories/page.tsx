@@ -1,10 +1,10 @@
 "use client";
 
 import { RepositoriesManager } from "@/components/repositories-manager";
-import { usePrIsmWorkspace } from "@/hooks/use-pr-ism-workspace";
+import { usePrIsmyWorkspace } from "@/hooks/use-pr-ismy-workspace";
 
 export default function RepositoriesPage() {
-  const { repositories, settings, ready, addRepository, removeRepository, syncRepositoryById, updateSettings } = usePrIsmWorkspace();
+  const { repositories, settings, ready, addRepository, removeRepository, syncRepositoryById, updateSettings } = usePrIsmyWorkspace();
 
   if (!ready) {
     return null;

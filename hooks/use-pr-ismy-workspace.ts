@@ -8,7 +8,7 @@ import { loadRepositories, loadSettings, saveRepositories, saveSettings } from "
 import type { AppSettings, RepositoryConnection } from "@/lib/types";
 import { parseGitHubUrl } from "@/lib/utils";
 
-export function usePrIsmWorkspace() {
+export function usePrIsmyWorkspace() {
   const [repositories, setRepositories, repositoriesReady] = useLocalStorageState(loadRepositories, saveRepositories);
   const [settings, setSettings, settingsReady] = useLocalStorageState(loadSettings, saveSettings);
 

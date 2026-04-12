@@ -46,7 +46,7 @@ const config: Config = {
         ghost: "0 8px 32px rgba(0, 0, 0, 0.4)"
       },
       backgroundImage: {
-        "pr-ism-cta": "linear-gradient(135deg, rgb(var(--primary) / 1), rgb(var(--primary-soft) / 1))",
+        "pr-ismy-cta": "linear-gradient(135deg, rgb(var(--primary) / 1), rgb(var(--primary-soft) / 1))",
         "editorial-grid":
           "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0)"
       },

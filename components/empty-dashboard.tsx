@@ -12,7 +12,7 @@ export function EmptyDashboard() {
       </div>
       <h1 className="mt-6 font-display text-4xl font-extrabold tracking-[-0.05em]">Connect a repository to start analyzing PR flow</h1>
       <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-        `pr-ism` stores repository connections and GitHub tokens in your browser, then drives the dashboard from synced pull
+        `pr-ismy` stores repository connections and GitHub tokens in your browser, then drives the dashboard from synced pull
         request history.
       </p>
       <div className="mt-8">
