@@ -174,7 +174,7 @@ export function LaunchpadPage({ session }: { session: Session }) {
             className="grid gap-4 lg:grid-cols-[3fr_2fr]"
             aria-label="Code volume"
           >
-            <LinesChart weekly={summary.weekly} stale={stale} />
+            <LinesChart activity={summary.activity} stale={stale} />
             <HistogramChart
               title="Pull request size"
               description={`Lines changed per merged pull request; median ${formatCompact(k.medianLines)}`}

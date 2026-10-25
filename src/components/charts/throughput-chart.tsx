@@ -1,6 +1,8 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type { LaunchpadSummary } from "@shared/metrics/launchpad";
+import type { Granularity } from "@shared/metrics/window";
 import { ChartCard } from "@/components/chart-card";
+import { GranularityToggle } from "@/components/charts/granularity-toggle";
 import {
   ChartContainer,
   ChartLegend,
@@ -17,7 +19,7 @@ const PLAIN: ChartConfig = {
   merged: { label: "Merged", color: "var(--chart-accent)" },
 };
 
-/** Weekly opened vs merged, or merged stacked by repo (top repos + Other). */
+/** Opened vs merged per week or day, or merged stacked by repo (top repos + Other). */
 export function ThroughputChart({
   summary,
   stale,
@@ -26,13 +28,17 @@ export function ThroughputChart({
   stale?: boolean;
 }) {
   const [byRepo, setByRepo] = useState(false);
-  const { weekly, mergedByRepo } = summary;
+  const [granularity, setGranularity] = useState<Granularity>("week");
+  const { mergedByRepo } = summary;
+  const activity = summary.activity[granularity];
+  const stackedPoints = mergedByRepo.points[granularity];
   const canStack = mergedByRepo.series.length > 1;
   const stacked = byRepo && canStack;
-  const data = (stacked ? mergedByRepo.points : weekly) as unknown as Record<
+  const data = (stacked ? stackedPoints : activity) as unknown as Record<
     string,
     string | number
   >[];
+  const period = granularity === "week" ? "Week" : "Day";
 
   const repoConfig: ChartConfig = Object.fromEntries(
     mergedByRepo.series.map((repo, index) => [
@@ -43,15 +49,19 @@ export function ThroughputChart({
 
   const table = stacked
     ? {
-        head: ["Week", ...mergedByRepo.series],
-        rows: mergedByRepo.points.map((point) => [
+        head: [period, ...mergedByRepo.series],
+        rows: stackedPoints.map((point) => [
           point.label,
           ...mergedByRepo.series.map((repo) => point[repo] as number),
         ]),
       }
     : {
-        head: ["Week", "Opened", "Merged"],
-        rows: weekly.map((point) => [point.label, point.opened, point.merged]),
+        head: [period, "Opened", "Merged"],
+        rows: activity.map((point) => [
+          point.label,
+          point.opened,
+          point.merged,
+        ]),
       };
 
   return (
@@ -59,25 +69,28 @@ export function ThroughputChart({
       title="Throughput"
       description={
         stacked
-          ? "Merged pull requests per week by repository"
-          : "Pull requests opened and merged per week"
+          ? `Merged pull requests per ${granularity} by repository`
+          : `Pull requests opened and merged per ${granularity}`
       }
       table={table}
       stale={stale}
       action={
-        canStack ? (
-          <button
-            type="button"
-            aria-pressed={byRepo}
-            onClick={() => setByRepo((value) => !value)}
-            className={cn(
-              "h-7 cursor-pointer rounded-md border px-2 text-xs font-medium text-muted-foreground transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-              byRepo && "bg-muted text-foreground",
-            )}
-          >
-            By repo
-          </button>
-        ) : null
+        <>
+          <GranularityToggle value={granularity} onChange={setGranularity} />
+          {canStack ? (
+            <button
+              type="button"
+              aria-pressed={byRepo}
+              onClick={() => setByRepo((value) => !value)}
+              className={cn(
+                "h-7 cursor-pointer rounded-md border px-2 text-xs font-medium text-muted-foreground transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                byRepo && "bg-muted text-foreground",
+              )}
+            >
+              By repo
+            </button>
+          ) : null}
+        </>
       }
     >
       <ChartContainer

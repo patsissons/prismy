@@ -20,7 +20,7 @@ const FEATURES = [
   {
     Icon: GitPullRequestArrow,
     title: "Throughput",
-    text: "Pull requests opened and merged per week, across every repo you touch, with the trend against the prior period.",
+    text: "Pull requests opened and merged per week or per day, across every repo you touch, with the trend against the prior period.",
   },
   {
     Icon: Scale,

@@ -6,8 +6,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { WeekPoint } from "@shared/metrics/launchpad";
+import { useState } from "react";
+import type { PeriodPoint } from "@shared/metrics/launchpad";
+import type { Granularity } from "@shared/metrics/window";
 import { ChartCard } from "@/components/chart-card";
+import { GranularityToggle } from "@/components/charts/granularity-toggle";
 import {
   ChartContainer,
   ChartLegend,
@@ -23,15 +26,17 @@ const CONFIG: ChartConfig = {
   deletions: { label: "Deleted", color: "var(--chart-2)" },
 };
 
-/** Lines added above the baseline and deleted below it, per week of merges. */
+/** Lines added above the baseline and deleted below it, per week or day of merges. */
 export function LinesChart({
-  weekly,
+  activity,
   stale,
 }: {
-  weekly: WeekPoint[];
+  activity: Record<Granularity, PeriodPoint[]>;
   stale?: boolean;
 }) {
-  const data = weekly.map((point) => ({
+  const [granularity, setGranularity] = useState<Granularity>("week");
+  const points = activity[granularity];
+  const data = points.map((point) => ({
     label: point.label,
     additions: point.additions,
     deletions: -point.deletions,
@@ -39,11 +44,14 @@ export function LinesChart({
   return (
     <ChartCard
       title="Code volume"
-      description="Lines added and deleted in merged pull requests, per week"
+      description={`Lines added and deleted in merged pull requests, per ${granularity}`}
       stale={stale}
+      action={
+        <GranularityToggle value={granularity} onChange={setGranularity} />
+      }
       table={{
-        head: ["Week", "Added", "Deleted"],
-        rows: weekly.map((point) => [
+        head: [granularity === "week" ? "Week" : "Day", "Added", "Deleted"],
+        rows: points.map((point) => [
           point.label,
           point.additions,
           point.deletions,

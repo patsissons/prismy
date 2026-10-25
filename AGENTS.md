@@ -64,10 +64,12 @@ Commit in small, modular units (one logical change per commit).
 - **Metrics are pure.** Everything in `shared/metrics` takes `PrRecord[]` and
   a `TimeWindow` and is unit-tested in `metrics.test.ts`. Windows are
   half-open `[from, to)`; "merged" means `mergedAt` in the window, "opened"
-  means `createdAt` in it; weeks start Monday 00:00 UTC.
+  means `createdAt` in it; weeks start Monday 00:00 UTC and days at 00:00 UTC.
 - **One filter row.** The window selector and sync chip sit in the header
   (`AppShell` `controls`) and scope every number on the page. The window is
-  the `?window=` query parameter; nothing else is per-chart.
+  the `?window=` query parameter; nothing else is per-chart. Toggles inside
+  a chart card (table view, By repo, Week/Day) are local view state, not
+  filters, and stay out of the URL.
 - **Chart rules** (see `src/index.css` and `src/components/charts`): series
   colours are the `--chart-*` tokens only, assigned in fixed order (repo
   series fold past seven into "Other"); "you" is `--chart-accent` and context

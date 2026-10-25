@@ -35,6 +35,29 @@ test("the launchpad sums up the viewer's pull requests", async ({ page }) => {
   await expect(repos).toHaveCount(3);
 });
 
+test("throughput and code volume switch between weeks and days", async ({
+  page,
+}) => {
+  await page.goto("/");
+  for (const [title, description] of [
+    ["Throughput", /opened and merged per day/],
+    ["Code volume", /merged pull requests, per day/],
+  ] as const) {
+    const card = page
+      .locator('[data-slot="card"]')
+      .filter({ has: page.getByRole("heading", { name: title }) });
+    const day = card.getByRole("button", { name: "Day", exact: true });
+    await expect(
+      card.getByRole("button", { name: "Week", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await day.click();
+    await expect(day).toHaveAttribute("aria-pressed", "true");
+    await expect(card.getByText(description)).toBeVisible();
+    await card.getByRole("button", { name: "Table view" }).click();
+    await expect(card.getByRole("columnheader").first()).toHaveText("Day");
+  }
+});
+
 test("the window is in the URL and rescopes every number", async ({ page }) => {
   await page.goto("/");
   await expect(
