@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "prismy",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "binding": "ASSETS",
+    // Every request hits the Worker first so /api/* is handled before the
+    // SPA assets; everything else falls through to the assets.
+    "run_worker_first": true,
+    "not_found_handling": "single-page-application",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  "workers_dev": true,
+  // Required (even empty) for `wrangler preview`, which deploys each PR's
+  // preview (.github/workflows/preview.yml).
+  "previews": {},
+  "vars": {
+    // Public: the GitHub OAuth app's client id. The secret and SESSION_SECRET
+    // are Worker secrets (`wrangler secret put`) / .dev.vars locally.
+    "GITHUB_CLIENT_ID": "",
+  },
+  "routes": [{ "pattern": "prismy.lgtm.page", "custom_domain": true }],
+}
