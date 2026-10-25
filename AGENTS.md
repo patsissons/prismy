@@ -99,6 +99,10 @@ Commit in small, modular units (one logical change per commit).
   StrictMode's double effect cannot interleave two syncs.
 - The chart pages are lazy (`src/App.tsx`) so the landing page doesn't load
   Recharts; `vite.config.ts` raises the chunk-size warning accordingly.
+- CI's `validate` job runs in `mcr.microsoft.com/playwright:v<version>-noble`,
+  with the version read from `pnpm-lock.yaml` by the `playwright-version`
+  job, so bumping `@playwright/test` bumps the image. Don't reintroduce
+  `playwright install --with-deps`: its apt step has stalled for 35 minutes.
 - `wrangler preview` (the PR preview workflow) fails unless `wrangler.jsonc`
   has a `previews` block; keep the empty `"previews": {}`.
 - `public/og.png` and `public/apple-touch-icon.png` are generated

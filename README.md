@@ -67,8 +67,9 @@ with a random `SESSION_SECRET` (`openssl rand -base64 32`).
 
 ## Deploying
 
-CI (`.github/workflows/ci.yml`) validates every push and PR and deploys
-`main` to Cloudflare. Each PR also gets a Workers preview
+CI (`.github/workflows/ci.yml`) validates every push and PR, inside the
+official Playwright image for the locked `@playwright/test` version, and
+deploys `main` to Cloudflare. Each PR also gets a Workers preview
 (`.github/workflows/preview.yml`). Repository secrets: `CLOUDFLARE_API_TOKEN`,
 `CLOUDFLARE_ACCOUNT_ID`.
 

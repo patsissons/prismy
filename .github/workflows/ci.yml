@@ -12,8 +12,33 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  validate:
+  # The validate container's tag must match the locked @playwright/test, and
+  # `container.image` can only read `needs` outputs, so resolve it first.
+  playwright-version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: pnpm-lock.yaml
+          sparse-checkout-cone-mode: false
+
+      - id: resolve
+        run: |
+          version="$(grep -m1 -oP "^  '@playwright/test@\K[0-9.]+" pnpm-lock.yaml)"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  validate:
+    needs: playwright-version
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Browsers and their system libraries come preinstalled, so no step
+    # depends on an apt mirror (one once took 35 minutes for install-deps).
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      options: --user 1001
     steps:
       - uses: actions/checkout@v5
 
@@ -26,26 +51,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-
-      - name: Resolve Playwright version
-        id: playwright
-        run: |
-          echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
-
-      - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps webkit chromium
-
-      - name: Install Playwright system deps
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps webkit chromium
 
       # Format check + typecheck + lint + unit tests + e2e against the local
       # Worker (specs stub /api/apps, so no live apps are fetched).
