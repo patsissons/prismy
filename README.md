@@ -1,81 +1,99 @@
-# PR-ismy
+# Prismy
 
-PR-ismy is a local-first pull request analytics dashboard for GitHub repositories. It lets you connect repositories, sync recent pull request data from the GitHub API, and explore throughput, merge velocity, and review workload from a single browser-based workspace.
+Prismy shows your impact through GitHub pull requests, served at
+<https://prismy.lgtm.page>. Sign in with GitHub and it gathers your pull
+requests across every repository you contribute to, then turns them into
+throughput, code volume and cycle time with the trend against the prior
+period. Focus one repository to see how you compare with its other
+contributors.
 
-## What It Does
+## How it works
 
-- Connect one or more GitHub repositories from the UI
-- Sync enough pull requests per repository to cover the 180-day dashboard window
-- Explore PR activity through overview, team, and history dashboards
-- Filter by repository, date range, metric, bucket size, and author
-- Persist repository connections and settings in browser `localStorage`
-- Persist dashboard filter state in the URL so views are shareable/bookmarkable
+- **Sign in** is GitHub's OAuth web flow, completed by the Cloudflare Worker
+  (`worker/auth.ts`). You choose public-only (`read:user`) or private
+  (`read:user repo`) access. The token is sealed with AES-GCM into an
+  HttpOnly cookie (`worker/session.ts`); the browser never sees it, and
+  signing out revokes it at GitHub.
+- **GitHub calls** go through `POST /api/github/graphql`, which attaches the
+  token and passes GitHub's rate-limit headers back (`worker/github.ts`).
+  The Worker keeps no state: no KV, no database.
+- **Sync** (`shared/sync/engine.ts`) searches `is:pr author:you` (the
+  Launchpad) or `is:pr repo:owner/name` (repo focus) over the selected
+  window, newest first. Searches are sliced by creation date so each stays
+  under GitHub's 1,000-result limit; every page is written through to
+  IndexedDB (`src/db`, one database per login) so an interrupted sync
+  resumes. Later runs fetch only pull requests updated since the last one,
+  and widening the window fetches only the older range. Repo focus caps at
+  3,000 newest pull requests (load more in steps of 1,000, up to 10,000);
+  because loading is newest-first the cap shortens the window equally for
+  everyone, which keeps comparisons fair, and the page says so.
+- **Metrics** (`shared/metrics`) are pure functions over the stored records:
+  counts and merge rate, weekly series, cycle time quartiles and histogram,
+  size distribution, per-repo and per-contributor rows, rank and percentile.
+- **Charts** follow one set of rules: thin marks, hairline grid, a legend for
+  two or more series, tooltips everywhere, and a table view for every chart.
+  Chart colours are tokens in `src/index.css`; the categorical palette is
+  validated for colour-vision deficiency in both themes.
 
-## Tech Stack
-
-- Next.js 15
-- React 19
-- TypeScript
-- Tailwind CSS
-
-## Getting Started
-
-### Requirements
-
-- Node.js 20 or newer
-- `pnpm`
-
-### Install
+## Setup
 
 ```bash
 pnpm install
+cp .dev.vars.example .dev.vars   # then fill it in
+pnpm dev                          # http://localhost:5173
 ```
 
-### Run Locally
+Local sign-in needs a GitHub OAuth app (Settings → Developer settings →
+OAuth Apps) whose callback URLs include
+`http://localhost:5173/api/auth/callback` (one app can list both the local
+and the production callback). Put its client id and secret in `.dev.vars`
+with a random `SESSION_SECRET` (`openssl rand -base64 32`).
+
+## Scripts
+
+| Script                                            | What it does                                                 |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| `pnpm dev`                                        | Vite dev server with the Worker running in workerd           |
+| `pnpm build`                                      | Production build to `dist/`                                  |
+| `pnpm run deploy`                                 | Build and `wrangler deploy` (`run` is required)              |
+| `pnpm test` / `pnpm test:watch`                   | Unit tests (Vitest): `shared/`, `worker/`, `src/`            |
+| `pnpm test:e2e`                                   | Playwright against the dev server (GitHub stubbed)           |
+| `pnpm typecheck`                                  | `wrangler types` then `tsc -b` across the three projects     |
+| `pnpm lint` / `pnpm format` / `pnpm format:check` | ESLint / Prettier                                            |
+| `pnpm validate:quick`                             | format check + typecheck + lint + unit tests                 |
+| `pnpm validate`                                   | `validate:quick` + e2e (CI)                                  |
+| `pnpm format-and-validate`                        | format, then `validate`                                      |
+| `pnpm og`                                         | Regenerate `public/og.png` and `public/apple-touch-icon.png` |
+
+## Deploying
+
+CI (`.github/workflows/ci.yml`) validates every push and PR, inside the
+official Playwright image for the locked `@playwright/test` version, and
+deploys `main` to Cloudflare. Each PR also gets a Workers preview
+(`.github/workflows/preview.yml`). Repository secrets: `CLOUDFLARE_API_TOKEN`,
+`CLOUDFLARE_ACCOUNT_ID`.
+
+Worker configuration is `wrangler.jsonc`. The OAuth app's client id and
+secret and the session key are Worker secrets. With the OAuth and
+Cloudflare values in a local `.env` (gitignored), one script pushes
+everything after the first deploy, generating `SESSION_SECRET` if `.env`
+has none:
 
 ```bash
-pnpm dev
+pnpm run deploy        # creates the Worker and the custom domain
+sh scripts/secrets.sh  # Worker secrets + the two GitHub Actions secrets
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Or by hand: `pnpm exec wrangler secret put <NAME>` for the three Worker
+secrets (`openssl rand -base64 32` for `SESSION_SECRET`) and `gh secret set`
+for `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 
-## Available Scripts
+The production OAuth app's callback URL is
+`https://prismy.lgtm.page/api/auth/callback`.
 
-```bash
-pnpm dev
-pnpm build
-pnpm start
-pnpm lint
-pnpm typecheck
-```
+## Stack
 
-## How To Use It
-
-1. Open the **Repositories** page.
-2. Add a repository URL like `https://github.com/org/repo`.
-3. Optionally add a classic GitHub personal access token if you need private repo access or higher rate limits.
-4. Sync the repository.
-5. Review analytics in:
-   - **Overview** for KPIs, priority reviews, and status composition
-   - **Team** for contribution and merge breakdowns by author
-   - **History** for recent PR activity and throughput trends
-
-## Data Model And Storage
-
-- Repository connections, synced PR data, and app settings are stored in browser `localStorage`
-- The GitHub token entered in the app is also stored locally in the browser
-- Selected dashboard filters are stored in the URL query string
-- There is no backend or server-side database in the current implementation
-
-## GitHub Sync Notes
-
-- Sync uses the GitHub REST API from the client
-- Public repositories can be queried without a token until rate limits apply
-- Private repositories require a classic PAT with the `repo` scope
-- If your organization uses SSO, authorize the token for that organization after creating it
-- Sync paginates GitHub pull requests until it covers the last 180 days of PR activity
-- Some fields such as additions/deletions may be approximated when the list API does not provide them
-
-## Current Scope
-
-This project is currently focused on a local analytics workspace rather than a production SaaS backend. Settings like alerts are represented in the UI and stored locally, but they are not wired to external delivery systems yet.
+React 19, Vite, Tailwind v4, shadcn/ui (charts on Recharts), react-router,
+Dexie; one Cloudflare Worker serving the SPA as static assets plus the
+`/api` routes; Vitest, Playwright (desktop Chrome and mobile Safari), ESLint,
+Prettier.
