@@ -41,8 +41,22 @@ export function weekStart(iso: string): string {
   return new Date(monday).toISOString();
 }
 
-export interface WeekBucket {
-  /** ISO instant of the Monday. */
+export type Granularity = "week" | "day";
+
+/** 00:00 UTC of the day containing `iso`. */
+export function dayStart(iso: string): string {
+  const date = new Date(iso);
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  ).toISOString();
+}
+
+export function bucketStart(iso: string, granularity: Granularity): string {
+  return granularity === "week" ? weekStart(iso) : dayStart(iso);
+}
+
+export interface Bucket {
+  /** ISO instant of the bucket's first day (a Monday for weeks). */
   start: string;
   /** e.g. "Jan 6" */
   label: string;
@@ -58,13 +72,22 @@ export function weekLabel(start: string): string {
   return LABEL.format(new Date(start));
 }
 
-/** Every week that overlaps the window, oldest first. */
-export function weekBuckets(window: TimeWindow): WeekBucket[] {
-  const buckets: WeekBucket[] = [];
-  let start = weekStart(window.from);
+/** Every week or day that overlaps the window, oldest first. */
+export function buckets(
+  window: TimeWindow,
+  granularity: Granularity,
+): Bucket[] {
+  const step = granularity === "week" ? 7 : 1;
+  const result: Bucket[] = [];
+  let start = bucketStart(window.from, granularity);
   while (start < window.to) {
-    buckets.push({ start, label: weekLabel(start) });
-    start = addDays(start, 7);
+    result.push({ start, label: weekLabel(start) });
+    start = addDays(start, step);
   }
-  return buckets;
+  return result;
+}
+
+/** Every week that overlaps the window, oldest first. */
+export function weekBuckets(window: TimeWindow): Bucket[] {
+  return buckets(window, "week");
 }

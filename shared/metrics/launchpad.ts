@@ -13,9 +13,9 @@ import {
 } from "./pr";
 import { median } from "./stats";
 import { kpis, type Kpis } from "./summary";
-import { priorWindow, weekBuckets, weekStart } from "./window";
+import { bucketStart, buckets, priorWindow, type Granularity } from "./window";
 
-export interface WeekPoint {
+export interface PeriodPoint {
   start: string;
   label: string;
   opened: number;
@@ -24,8 +24,8 @@ export interface WeekPoint {
   deletions: number;
 }
 
-/** One week with merged counts per repo series (top repos + "Other"). */
-export type StackedWeekPoint = { start: string; label: string } & Record<
+/** One week or day with merged counts per repo series (top repos + "Other"). */
+export type StackedPeriodPoint = { start: string; label: string } & Record<
   string,
   number | string
 >;
@@ -46,8 +46,11 @@ export interface LaunchpadSummary {
   prior: TimeWindow;
   kpis: Kpis;
   priorKpis: Kpis;
-  weekly: WeekPoint[];
-  mergedByRepo: { series: string[]; points: StackedWeekPoint[] };
+  activity: Record<Granularity, PeriodPoint[]>;
+  mergedByRepo: {
+    series: string[];
+    points: Record<Granularity, StackedPeriodPoint[]>;
+  };
   cycleHistogram: { bucket: CycleBucket; count: number }[];
   sizeDistribution: { bucket: SizeBucket; count: number }[];
   repos: RepoRow[];
@@ -77,8 +80,17 @@ export function launchpadSummary(
     prior,
     kpis: kpis(prs, window),
     priorKpis: kpis(prs, prior),
-    weekly: weekly(prs, window),
-    mergedByRepo: { series, points: mergedByRepo(merged, window, series) },
+    activity: {
+      week: activity(prs, window, "week"),
+      day: activity(prs, window, "day"),
+    },
+    mergedByRepo: {
+      series,
+      points: {
+        week: mergedByRepo(merged, window, series, "week"),
+        day: mergedByRepo(merged, window, series, "day"),
+      },
+    },
     cycleHistogram: CYCLE_BUCKETS.map(({ key }) => ({
       bucket: key,
       count: merged.filter((pr) => cycleBucket(cycleHours(pr)!) === key).length,
@@ -100,23 +112,24 @@ export function launchpadSummary(
   };
 }
 
-export function weekly(
+export function activity(
   prs: readonly PrRecord[],
   window: TimeWindow,
-): WeekPoint[] {
-  const points = new Map<string, WeekPoint>(
-    weekBuckets(window).map((bucket) => [
+  granularity: Granularity,
+): PeriodPoint[] {
+  const points = new Map<string, PeriodPoint>(
+    buckets(window, granularity).map((bucket) => [
       bucket.start,
       { ...bucket, opened: 0, merged: 0, additions: 0, deletions: 0 },
     ]),
   );
   for (const pr of prs) {
     if (openedIn(pr, window)) {
-      const point = points.get(weekStart(pr.createdAt));
+      const point = points.get(bucketStart(pr.createdAt, granularity));
       if (point) point.opened += 1;
     }
     if (mergedIn(pr, window)) {
-      const point = points.get(weekStart(pr.mergedAt!));
+      const point = points.get(bucketStart(pr.mergedAt!, granularity));
       if (point) {
         point.merged += 1;
         point.additions += pr.additions;
@@ -131,9 +144,10 @@ function mergedByRepo(
   merged: readonly PrRecord[],
   window: TimeWindow,
   series: readonly string[],
-): StackedWeekPoint[] {
-  const points = new Map<string, StackedWeekPoint>(
-    weekBuckets(window).map((bucket) => [
+  granularity: Granularity,
+): StackedPeriodPoint[] {
+  const points = new Map<string, StackedPeriodPoint>(
+    buckets(window, granularity).map((bucket) => [
       bucket.start,
       Object.assign(
         { ...bucket },
@@ -142,7 +156,7 @@ function mergedByRepo(
     ]),
   );
   for (const pr of merged) {
-    const point = points.get(weekStart(pr.mergedAt!));
+    const point = points.get(bucketStart(pr.mergedAt!, granularity));
     if (!point) continue;
     const key = series.includes(pr.repo) ? pr.repo : OTHER_SERIES;
     if (key in point) point[key] = (point[key] as number) + 1;

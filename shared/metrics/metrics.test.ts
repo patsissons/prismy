@@ -5,7 +5,14 @@ import { cycleBucket, sizeBucket } from "./pr";
 import { repoSummary } from "./repo";
 import { median, percentChange, percentile, percentileRank } from "./stats";
 import { kpis } from "./summary";
-import { priorWindow, resolveWindow, weekBuckets, weekStart } from "./window";
+import {
+  buckets,
+  dayStart,
+  priorWindow,
+  resolveWindow,
+  weekBuckets,
+  weekStart,
+} from "./window";
 
 const NOW = new Date("2026-10-01T00:00:00.000Z");
 const WINDOW = resolveWindow("30d", NOW);
@@ -42,12 +49,25 @@ describe("window", () => {
     expect(weekStart("2026-09-03T15:00:00.000Z")).toBe(
       "2026-08-31T00:00:00.000Z",
     );
-    const buckets = weekBuckets(WINDOW);
-    expect(buckets[0]).toEqual({
+    const weeks = weekBuckets(WINDOW);
+    expect(weeks[0]).toEqual({
       start: "2026-08-31T00:00:00.000Z",
       label: "Aug 31",
     });
-    expect(buckets).toHaveLength(5);
+    expect(weeks).toHaveLength(5);
+  });
+
+  it("buckets by UTC day", () => {
+    expect(dayStart("2026-09-03T15:00:00.000Z")).toBe(
+      "2026-09-03T00:00:00.000Z",
+    );
+    const days = buckets(WINDOW, "day");
+    expect(days).toHaveLength(30);
+    expect(days[0]).toEqual({
+      start: "2026-09-01T00:00:00.000Z",
+      label: "Sep 1",
+    });
+    expect(days.at(-1)?.label).toBe("Sep 30");
   });
 });
 
@@ -162,7 +182,9 @@ describe("launchpadSummary", () => {
   });
 
   it("buckets weekly activity and distributions", () => {
-    const week = summary.weekly.find((point) => point.label === "Sep 7")!;
+    const week = summary.activity.week.find(
+      (point) => point.label === "Sep 7",
+    )!;
     expect(week).toMatchObject({ opened: 1, merged: 1, additions: 500 });
     expect(summary.cycleHistogram.find((b) => b.bucket === "1-3d")?.count).toBe(
       1,
@@ -186,10 +208,39 @@ describe("launchpadSummary", () => {
     const result = launchpadSummary(many, "pat", WINDOW);
     expect(result.mergedByRepo.series).toHaveLength(8);
     expect(result.mergedByRepo.series.at(-1)).toBe("Other");
-    const week = result.mergedByRepo.points.find(
+    const week = result.mergedByRepo.points.week.find(
       (point) => point.label === "Sep 7",
     )!;
     expect(week.Other).toBe(2);
+    const day = result.mergedByRepo.points.day.find(
+      (point) => point.label === "Sep 11",
+    )!;
+    expect(day.Other).toBe(2);
+  });
+
+  it("buckets daily activity on the UTC day", () => {
+    const day = (label: string) =>
+      summary.activity.day.find((point) => point.label === label)!;
+    expect(day("Sep 10")).toMatchObject({ opened: 1, merged: 0 });
+    expect(day("Sep 13")).toMatchObject({
+      opened: 0,
+      merged: 1,
+      additions: 500,
+      deletions: 100,
+    });
+    expect(
+      summary.mergedByRepo.points.day.find((p) => p.label === "Sep 13"),
+    ).toMatchObject({ "acme/web": 1, "acme/app": 0 });
+  });
+
+  it("agrees on totals across granularities", () => {
+    const total = (points: { opened: number; merged: number }[]) =>
+      points.reduce(
+        (sum, point) => [sum[0]! + point.opened, sum[1]! + point.merged],
+        [0, 0],
+      );
+    expect(total(summary.activity.day)).toEqual(total(summary.activity.week));
+    expect(total(summary.activity.day)).toEqual([4, 2]);
   });
 });
 
