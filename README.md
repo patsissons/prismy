@@ -55,7 +55,7 @@ with a random `SESSION_SECRET` (`openssl rand -base64 32`).
 | ------------------------------------------------- | ------------------------------------------------------------ |
 | `pnpm dev`                                        | Vite dev server with the Worker running in workerd           |
 | `pnpm build`                                      | Production build to `dist/`                                  |
-| `pnpm deploy`                                     | Build and `wrangler deploy`                                  |
+| `pnpm run deploy`                                 | Build and `wrangler deploy` (`run` is required)              |
 | `pnpm test` / `pnpm test:watch`                   | Unit tests (Vitest): `shared/`, `worker/`, `src/`            |
 | `pnpm test:e2e`                                   | Playwright against the dev server (GitHub stubbed)           |
 | `pnpm typecheck`                                  | `wrangler types` then `tsc -b` across the three projects     |
@@ -73,13 +73,19 @@ CI (`.github/workflows/ci.yml`) validates every push and PR and deploys
 `CLOUDFLARE_ACCOUNT_ID`.
 
 Worker configuration is `wrangler.jsonc`. The OAuth app's client id and
-secret and the session key are Worker secrets:
+secret and the session key are Worker secrets. With the OAuth and
+Cloudflare values in a local `.env` (gitignored), one script pushes
+everything after the first deploy, generating `SESSION_SECRET` if `.env`
+has none:
 
 ```bash
-pnpm exec wrangler secret put GITHUB_CLIENT_ID
-pnpm exec wrangler secret put GITHUB_CLIENT_SECRET
-openssl rand -base64 32 | pnpm exec wrangler secret put SESSION_SECRET
+pnpm run deploy        # creates the Worker and the custom domain
+sh scripts/secrets.sh  # Worker secrets + the two GitHub Actions secrets
 ```
+
+Or by hand: `pnpm exec wrangler secret put <NAME>` for the three Worker
+secrets (`openssl rand -base64 32` for `SESSION_SECRET`) and `gh secret set`
+for `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 
 The production OAuth app's callback URL is
 `https://prismy.lgtm.page/api/auth/callback`.
