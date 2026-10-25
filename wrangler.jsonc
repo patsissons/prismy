@@ -17,10 +17,7 @@
   // Required (even empty) for `wrangler preview`, which deploys each PR's
   // preview (.github/workflows/preview.yml).
   "previews": {},
-  "vars": {
-    // Public: the GitHub OAuth app's client id. The secret and SESSION_SECRET
-    // are Worker secrets (`wrangler secret put`) / .dev.vars locally.
-    "GITHUB_CLIENT_ID": "",
-  },
+  // GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET and SESSION_SECRET are Worker
+  // secrets (`wrangler secret put`) in production and .dev.vars locally.
   "routes": [{ "pattern": "prismy.lgtm.page", "custom_domain": true }],
 }

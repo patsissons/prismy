@@ -4,7 +4,7 @@
  */
 export interface Env {
   ASSETS: Fetcher;
-  /** Public OAuth app client id (wrangler.jsonc `vars`). */
+  /** Secret: `wrangler secret put GITHUB_CLIENT_ID`. */
   GITHUB_CLIENT_ID: string;
   /** Secret: `wrangler secret put GITHUB_CLIENT_SECRET`. */
   GITHUB_CLIENT_SECRET: string;

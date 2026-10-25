@@ -44,9 +44,10 @@ pnpm dev                          # http://localhost:5173
 ```
 
 Local sign-in needs a GitHub OAuth app (Settings → Developer settings →
-OAuth Apps) with callback URL `http://localhost:5173/api/auth/callback`. Put
-its client id and secret in `.dev.vars` with a random `SESSION_SECRET`
-(`openssl rand -base64 32`).
+OAuth Apps) whose callback URLs include
+`http://localhost:5173/api/auth/callback` (one app can list both the local
+and the production callback). Put its client id and secret in `.dev.vars`
+with a random `SESSION_SECRET` (`openssl rand -base64 32`).
 
 ## Scripts
 
@@ -71,13 +72,13 @@ CI (`.github/workflows/ci.yml`) validates every push and PR and deploys
 (`.github/workflows/preview.yml`). Repository secrets: `CLOUDFLARE_API_TOKEN`,
 `CLOUDFLARE_ACCOUNT_ID`.
 
-Worker configuration is `wrangler.jsonc`. The production OAuth app's client
-id is the `GITHUB_CLIENT_ID` var there; its secret and the session key are
-Worker secrets:
+Worker configuration is `wrangler.jsonc`. The OAuth app's client id and
+secret and the session key are Worker secrets:
 
 ```bash
+pnpm exec wrangler secret put GITHUB_CLIENT_ID
 pnpm exec wrangler secret put GITHUB_CLIENT_SECRET
-pnpm exec wrangler secret put SESSION_SECRET
+openssl rand -base64 32 | pnpm exec wrangler secret put SESSION_SECRET
 ```
 
 The production OAuth app's callback URL is
